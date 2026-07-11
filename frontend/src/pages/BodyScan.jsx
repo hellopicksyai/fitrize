@@ -155,11 +155,7 @@ export default function BodyScan() {
 
   return (
     <div data-testid="bodyscan-page" className="space-y-6">
-      <div>
-        <div className="text-xs text-accent uppercase tracking-widest">AI Body Scan</div>
-        <h1 className="display text-4xl sm:text-5xl">Photo composition analysis</h1>
-        <p className="text-sm text-muted-foreground mt-1">Add 3 photos (Front, Side, Back) — upload from your gallery or take them with your camera. We estimate body fat, posture, symmetry & focus areas.</p>
-      </div>
+      <p className="text-sm text-muted-foreground">Add 3 photos (Front, Side, Back) — upload from your gallery or take them with your camera. We estimate body fat, posture, symmetry & focus areas.</p>
 
       <div className="grid sm:grid-cols-3 gap-4">
         <Slot label="Front" preview={previews.front} onPick={pick("front")} testid="slot-front"/>

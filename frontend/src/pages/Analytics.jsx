@@ -92,12 +92,7 @@ export default function Analytics() {
 
   return (
     <div data-testid="analytics-page" className="space-y-6">
-      <div className="flex items-end justify-between flex-wrap gap-3">
-        <div>
-          <div className="text-xs text-accent uppercase tracking-widest">Insights</div>
-          <h1 className="display text-4xl sm:text-5xl">Analytics</h1>
-          <p className="text-sm text-muted-foreground mt-1">Your trends across training and nutrition.</p>
-        </div>
+      <div className="flex items-end justify-end flex-wrap gap-3">
         <div className="flex gap-1 bg-secondary rounded-full p-1" data-testid="range-toggle">
           {RANGES.map((r) => (
             <button key={r.days} onClick={() => setDays(r.days)} data-testid={`range-${r.days}`}

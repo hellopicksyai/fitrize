@@ -58,6 +58,7 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [celebrate, setCelebrate] = useState(false);
+  const [analytics, setAnalytics] = useState(null);
 
   useEffect(() => {
     api.get("/stats/dashboard")
@@ -72,6 +73,8 @@ export default function Dashboard() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    // analytics summary (item 9: show analytics on the dashboard)
+    api.get("/analytics?days=30").then(r => setAnalytics(r.data?.summary)).catch(() => {});
   }, []);
 
   if (loading) return <DashboardSkeleton />;
@@ -153,6 +156,24 @@ export default function Dashboard() {
           </Card>
         </motion.div>
       </motion.div>
+
+      {/* 30-day analytics summary (merged from Analytics — item 9) */}
+      {analytics && (
+        <motion.div variants={stagger} initial="hidden" animate="show">
+          <Card className="p-5 rounded-2xl glass" data-testid="dash-analytics">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-xs text-muted-foreground uppercase tracking-widest">Last 30 days</div>
+              <Link to="/app/progress" className="text-xs text-accent hover:underline">View analytics →</Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="text-center"><div className="display text-3xl text-accent"><CountUp value={analytics.consistency_pct || 0} suffix="%" /></div><div className="text-xs text-muted-foreground mt-0.5">Consistency</div></div>
+              <div className="text-center"><div className="display text-3xl"><CountUp value={analytics.total_sessions || 0} /></div><div className="text-xs text-muted-foreground mt-0.5">Workouts</div></div>
+              <div className="text-center"><div className="display text-3xl"><CountUp value={analytics.avg_calories || 0} /></div><div className="text-xs text-muted-foreground mt-0.5">Avg calories</div></div>
+              <div className="text-center"><div className="display text-3xl text-primary"><CountUp value={analytics.avg_protein || 0} suffix="g" /></div><div className="text-xs text-muted-foreground mt-0.5">Avg protein</div></div>
+            </div>
+          </Card>
+        </motion.div>
+      )}
 
       <motion.div variants={stagger} initial="hidden" animate="show" className="grid md:grid-cols-3 gap-5">
         {[

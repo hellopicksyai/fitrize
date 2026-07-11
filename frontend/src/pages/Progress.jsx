@@ -4,16 +4,21 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Loader2, TrendingUp } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Loader2, TrendingUp, BarChart3, ScanLine, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from "recharts";
 
-export default function Progress() {
+// Merged in: Analytics (item 9) and Body Scan (item 8)
+import AnalyticsPanel from "@/pages/Analytics";
+import BodyScanPanel from "@/pages/BodyScan";
+
+function LogPanel() {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState({ weight_kg: "", body_fat: "", waist_cm: "" });
   const [busy, setBusy] = useState(false);
 
-  const load = () => api.get("/progress").then(r => setItems(r.data));
+  const load = () => api.get("/progress").then(r => setItems(r.data)).catch(() => {});
   useEffect(() => { load(); }, []);
 
   const submit = async (e) => {
@@ -28,16 +33,13 @@ export default function Progress() {
       toast.success("Progress saved");
       setForm({ weight_kg: "", body_fat: "", waist_cm: "" });
       load();
+    } catch {
+      toast.error("Couldn't save. Try again.");
     } finally { setBusy(false); }
   };
 
   return (
-    <div data-testid="progress-page" className="space-y-6">
-      <div>
-        <div className="text-xs text-accent uppercase tracking-widest">Progress</div>
-        <h1 className="display text-4xl sm:text-5xl">Track the trend</h1>
-      </div>
-
+    <div className="space-y-5">
       <Card className="p-5 rounded-2xl glass glow-hover">
         <form onSubmit={submit} className="grid sm:grid-cols-4 gap-3 items-end">
           <div><Label>Weight (kg)</Label><Input required type="number" step="0.1" value={form.weight_kg} onChange={e=>setForm({...form, weight_kg:e.target.value})} className="mt-1 rounded-xl" data-testid="prog-weight"/></div>
@@ -79,6 +81,30 @@ export default function Progress() {
           ))}
         </div>
       </Card>
+    </div>
+  );
+}
+
+export default function Progress() {
+  return (
+    <div data-testid="progress-page" className="space-y-6">
+      <div>
+        <div className="text-xs text-accent uppercase tracking-widest">Progress</div>
+        <h1 className="display text-4xl sm:text-5xl">Track the trend</h1>
+        <p className="text-sm text-muted-foreground mt-1">Log measurements, view analytics and scan your body — all in one place.</p>
+      </div>
+
+      <Tabs defaultValue="log" className="w-full">
+        <TabsList className="rounded-full" data-testid="progress-tabs">
+          <TabsTrigger value="log" className="rounded-full" data-testid="tab-log"><ClipboardList className="w-4 h-4 mr-1.5"/>Log & History</TabsTrigger>
+          <TabsTrigger value="analytics" className="rounded-full" data-testid="tab-analytics"><BarChart3 className="w-4 h-4 mr-1.5"/>Analytics</TabsTrigger>
+          <TabsTrigger value="scan" className="rounded-full" data-testid="tab-scan"><ScanLine className="w-4 h-4 mr-1.5"/>Body Scan</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="log" className="mt-5"><LogPanel /></TabsContent>
+        <TabsContent value="analytics" className="mt-5"><AnalyticsPanel /></TabsContent>
+        <TabsContent value="scan" className="mt-5"><BodyScanPanel /></TabsContent>
+      </Tabs>
     </div>
   );
 }
