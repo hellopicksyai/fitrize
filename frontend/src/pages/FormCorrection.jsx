@@ -3,7 +3,7 @@ import { api } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Play, Square, Loader2, Sparkles } from "lucide-react";
+import { Camera, Play, Square, Loader2, Sparkles, SwitchCamera } from "lucide-react";
 import { toast } from "sonner";
 import { usePoseCoach, SUPPORTED_EXERCISES } from "@/lib/poseCoach";
 
@@ -15,7 +15,7 @@ export default function FormCorrection() {
   const [ex, setEx] = useState("Squat");
   const [aiBusy, setAiBusy] = useState(false);
   const [aiCues, setAiCues] = useState([]);
-  const { videoRef, canvasRef, ready, live, reps, score, cues, start, stop, lastSession, clearSession } = usePoseCoach({ exercise: ex });
+  const { videoRef, canvasRef, ready, live, reps, score, cues, visible, start, stop, switchCamera, facingMode, lastSession, clearSession } = usePoseCoach({ exercise: ex });
   const [saving, setSaving] = useState(false);
 
   const MET = { "Squat": 5.0, "Push-ups": 8.0, "Pull-ups": 8.0, "Shoulder Press": 5.0,
@@ -75,8 +75,20 @@ export default function FormCorrection() {
           {!live && (
             <div className="absolute inset-0 grid place-items-center text-white/70 text-sm text-center px-6">
               {isRealTime
-                ? (ready ? "Camera off · press Start to begin live pose tracking" : "Loading MediaPipe pose model…")
+                ? (ready
+                    ? <div className="space-y-2">
+                        <div className="font-medium text-white">Camera off · press Start</div>
+                        <div className="text-xs text-white/60 max-w-xs mx-auto">
+                          For best accuracy: place your camera <b>to your side</b>, 2–3m away, with your <b>whole body in frame</b> and good lighting.
+                        </div>
+                      </div>
+                    : "Loading pose model…")
                 : `${ex} runs on AI cue feedback (no live tracking in v1)`}
+            </div>
+          )}
+          {live && !visible && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 px-4 py-2 rounded-full bg-amber-500/90 text-white text-xs font-medium" data-testid="visibility-warning">
+              Step back — get your whole body in frame
             </div>
           )}
           {live && (
@@ -91,6 +103,10 @@ export default function FormCorrection() {
                   {isHold ? "Hold · " : "Reps · "}<span className="font-bold" data-testid="form-reps">{reps}{isHold ? "s" : ""}</span>
                 </div>
               </div>
+              <button onClick={switchCamera} data-testid="switch-camera"
+                className="absolute bottom-4 right-4 z-10 px-3 py-2 rounded-full bg-black/60 backdrop-blur text-xs text-white flex items-center gap-1.5 hover:bg-black/80 transition">
+                <SwitchCamera className="w-4 h-4" /> {facingMode === "user" ? "Front" : "Back"}
+              </button>
               <div className="absolute inset-x-0 h-px bg-accent/80 scan-line"/>
               {cues.length > 0 && (
                 <div className="absolute bottom-4 left-4 right-4 glass rounded-2xl p-3 text-xs text-white">

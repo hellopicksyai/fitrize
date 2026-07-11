@@ -18,7 +18,7 @@ export default function Paywall({ feature, children, requiredTier = "pro" }) {
           <div className="w-12 h-12 mx-auto rounded-2xl bg-accent grid place-items-center mb-3">
             <Lock className="w-6 h-6 text-accent-foreground"/>
           </div>
-          <div className="text-xs text-accent uppercase tracking-widest">BitFits Pro</div>
+          <div className="text-xs text-accent uppercase tracking-widest">Fitrize Pro</div>
           <div className="display text-3xl mt-1">Unlock {feature}</div>
           <p className="text-sm text-muted-foreground mt-2">Upgrade to Pro to access AI form correction, body scan, and unlimited AI meal plans.</p>
           <div className="mt-5 flex flex-col sm:flex-row gap-2 justify-center">

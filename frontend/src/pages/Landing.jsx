@@ -38,7 +38,7 @@ const pricing = [
 ];
 
 const faqs = [
-  { q: "Is BitFits really free?", a: "Yes — the Free plan covers calorie tracking, basic workouts and progress. Pro unlocks AI form, custom meal plans, and the body scan." },
+  { q: "Is Fitrize really free?", a: "Yes — the Free plan covers calorie tracking, basic workouts and progress. Pro unlocks AI form, custom meal plans, and the body scan." },
   { q: "How accurate is photo calorie tracking?", a: "We use Gemini 3 Flash vision to estimate macros per portion. Confidence scores are returned so you can correct quickly." },
   { q: "Will live form correction work on my phone?", a: "Yes — the form coach uses your camera in-browser. A pose-detection demo is included in v1; full skeleton tracking ships in Pro." },
   { q: "Can I cancel anytime?", a: "Of course. Pro and Elite are month-to-month, no contracts." },
@@ -54,7 +54,7 @@ const Nav = () => {
           <div className="w-9 h-9 rounded-xl bg-primary grid place-items-center">
             <Zap className="w-5 h-5 text-primary-foreground" strokeWidth={2.5}/>
           </div>
-          <span className="display text-2xl">BitFits</span>
+          <span className="display text-2xl">Fitrize</span>
         </Link>
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground">Features</a>
@@ -260,7 +260,7 @@ const Pricing = () => {
         <div className="text-center max-w-2xl mx-auto">
           <div className="text-xs text-accent uppercase tracking-widest mb-3">Pricing</div>
           <h2 className="display text-4xl sm:text-5xl">{`Pick your level. Upgrade when you're ready.`}</h2>
-          {user?.tier && user.tier !== "free" && <div className="mt-3 text-sm text-accent">{`You're on BitFits ${user.tier.toUpperCase()} · enjoy ✨`}</div>}
+          {user?.tier && user.tier !== "free" && <div className="mt-3 text-sm text-accent">{`You're on Fitrize ${user.tier.toUpperCase()} · enjoy ✨`}</div>}
         </div>
         <div className="mt-12 grid md:grid-cols-3 gap-5">
           {pricing.map(p => (
@@ -322,11 +322,11 @@ const Footer = () => {
         <div className="lg:col-span-6">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-accent grid place-items-center"><Zap className="w-5 h-5 text-accent-foreground" strokeWidth={2.5}/></div>
-            <span className="display text-2xl">BitFits</span>
+            <span className="display text-2xl">Fitrize</span>
           </div>
           <p className="text-sm text-muted-foreground mt-4 max-w-md">Train smarter. Transform faster. The premium AI fitness OS — vision-grade calorie tracking, live form correction, and a coach that actually knows you.</p>
           <form onSubmit={sub} className="mt-6 flex gap-2 max-w-sm">
-            <Input data-testid="footer-newsletter-email" required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@bitfits.app" className="rounded-full"/>
+            <Input data-testid="footer-newsletter-email" required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@fitrize.app" className="rounded-full"/>
             <Button data-testid="footer-newsletter-submit" type="submit" className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold">
               <Send className="w-4 h-4"/>
             </Button>
@@ -374,7 +374,7 @@ const Footer = () => {
 
       <div className="border-t border-border">
         <div className="max-w-7xl mx-auto px-5 py-5 flex flex-col md:flex-row justify-between gap-3 text-xs text-muted-foreground">
-          <div>© {new Date().getFullYear()} BitFits Labs. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} Fitrize Labs. All rights reserved.</div>
           <div className="flex gap-5">
             <a href="#" data-testid="footer-legal-privacy" className="hover:text-foreground">Privacy</a>
             <a href="#" data-testid="footer-legal-terms" className="hover:text-foreground">Terms</a>

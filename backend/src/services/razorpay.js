@@ -12,6 +12,6 @@ export const RZP_KEY_ID_PUBLIC = RZP_KEY_ID;
 export const RZP_KEY_SECRET_RAW = RZP_KEY_SECRET;
 
 export const PLANS = {
-  pro: { amount_paise: 99900, tier: "pro", label: "BitFits Pro" },
-  elite: { amount_paise: 249900, tier: "elite", label: "BitFits Elite" },
+  pro: { amount_paise: 99900, tier: "pro", label: "Fitrize Pro" },
+  elite: { amount_paise: 249900, tier: "elite", label: "Fitrize Elite" },
 };

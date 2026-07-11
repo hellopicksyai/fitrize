@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import Celebrate from "@/components/Celebrate";
-import CountUp from "@/components/CountUp";
 import { EmptyState, ListSkeleton } from "@/components/Skeletons";
 import { Plus, Trash2, Dumbbell, Timer, Trophy, Check, X, Play, Pause, RotateCcw, Save, TrendingUp } from "lucide-react";
 
@@ -92,7 +91,6 @@ export default function WorkoutLogger() {
   };
 
   const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-  const volume = rows.reduce((sum, r) => sum + (Number(r.weight_kg) || 0) * (Number(r.reps) || 0), 0);
 
   return (
     <div data-testid="workout-logger-page" className="space-y-6 relative">
@@ -162,7 +160,6 @@ export default function WorkoutLogger() {
         </div>
         <div className="flex items-center justify-between mt-4 flex-wrap gap-3">
           <Button variant="outline" className="rounded-full" onClick={addRow} data-testid="wl-add-set"><Plus className="w-4 h-4 mr-1"/>Add set</Button>
-          <div className="text-sm text-muted-foreground">Volume: <span className="display text-xl text-accent"><CountUp value={Math.round(volume)} /></span> kg</div>
         </div>
         <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes (optional)" className="rounded-xl mt-4" data-testid="wl-notes"/>
         <Button onClick={save} disabled={busy} className="rounded-full mt-4 w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 font-bold glow-accent" data-testid="wl-save">
@@ -197,7 +194,7 @@ export default function WorkoutLogger() {
               <div key={h.id} className="rounded-2xl bg-secondary/50 p-4" data-testid={`history-${h.id}`}>
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="font-medium">{h.name}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleDateString()} · {Math.round(h.duration_sec/60)}m · {Math.round(h.total_volume)}kg vol · {h.total_sets} sets</div>
+                  <div className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleDateString()} · {Math.round(h.duration_sec/60)}m · {h.total_sets} sets</div>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {h.sets.map((s, i) => (

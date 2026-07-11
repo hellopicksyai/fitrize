@@ -21,15 +21,46 @@ router.post("/nutrition/plan", getCurrentUser, async (req, res, next) => {
     if (!v.ok) return res.status(422).json({ detail: v.error });
     const b = v.value;
     const p = req.user.profile || {};
+    const isIndian = b.diet_type === "indian";
+    const isVeg = b.diet_type === "vegetarian" || b.diet_type === "vegan";
     const system =
-      "You are an elite sports nutritionist. Generate a 1-day meal plan. " +
-      'Respond ONLY JSON: {"breakfast":{"name":"","calories":0,"protein":0,"carbs":0,"fats":0,"items":[""]},' +
-      '"lunch":{...},"dinner":{...},"snacks":{...},"daily_totals":{"calories":0,"protein":0,"carbs":0,"fats":0},"notes":""}';
+      "You are an elite sports nutritionist. Generate a realistic 1-day meal plan with FOUR meals. " +
+      "EVERY meal including snacks MUST be filled in with a real dish, macros, and at least 2 food items — never leave any meal empty. " +
+      "Prefer easily available, affordable, everyday foods. Do NOT use beef or lean beef. " +
+      (isIndian ? "Use Indian dishes and ingredients (dal, roti, paneer, curd, rice, chicken/egg if non-veg, sabzi, etc.). " : "") +
+      (isVeg ? "Keep everything strictly vegetarian (no meat, fish, or eggs for vegan). " : "") +
+      'Respond ONLY with valid JSON in exactly this shape (no markdown): ' +
+      '{"breakfast":{"name":"","calories":0,"protein":0,"carbs":0,"fats":0,"items":["",""]},' +
+      '"lunch":{"name":"","calories":0,"protein":0,"carbs":0,"fats":0,"items":["",""]},' +
+      '"dinner":{"name":"","calories":0,"protein":0,"carbs":0,"fats":0,"items":["",""]},' +
+      '"snacks":{"name":"","calories":0,"protein":0,"carbs":0,"fats":0,"items":["",""]},' +
+      '"daily_totals":{"calories":0,"protein":0,"carbs":0,"fats":0},"notes":""}';
     const prompt =
       `Goal: ${p.goal || "general"}. Target calories: ${p.target_cal || 2200}. ` +
-      `Protein goal: ${p.protein_goal_g || 150}g. Diet: ${b.diet_type}. Budget: ${b.budget}. ` +
-      `Weight: ${p.weight_kg || "?"} kg. Body fat: ${p.body_fat || "?"}.`;
-    const plan = await llmJson(system, prompt);
+      `Protein goal: ${p.protein_goal_g || 150}g. Diet type: ${b.diet_type}. Budget: ${b.budget}. ` +
+      `Weight: ${p.weight_kg || "?"} kg. ` +
+      `Remember: fill breakfast, lunch, dinner AND snacks. No beef.`;
+
+    let plan = await llmJson(system, prompt);
+
+    // Fallback: guarantee snacks (and other meals) are never empty.
+    const emptyMeal = (m) => !m || typeof m !== "object" || (!m.name && !(m.items || []).length);
+    const fallbackSnack = isIndian
+      ? { name: "Roasted chana & curd", calories: 250, protein: 15, carbs: 30, fats: 6, items: ["Roasted chana 40g", "Bowl of curd"] }
+      : { name: "Greek yogurt & nuts", calories: 250, protein: 18, carbs: 20, fats: 10, items: ["Greek yogurt 150g", "Mixed nuts 20g"] };
+    if (emptyMeal(plan?.snacks)) plan = { ...plan, snacks: fallbackSnack };
+    // if the whole thing failed to parse, give a minimal safe structure
+    if (!plan || (emptyMeal(plan.breakfast) && emptyMeal(plan.lunch) && emptyMeal(plan.dinner))) {
+      plan = {
+        breakfast: isIndian ? { name: "Poha with peanuts", calories: 350, protein: 10, carbs: 55, fats: 10, items: ["Poha", "Peanuts", "Veggies"] } : { name: "Oats & eggs", calories: 400, protein: 24, carbs: 40, fats: 14, items: ["Oats 60g", "2 eggs", "Banana"] },
+        lunch: isIndian ? { name: "Dal, roti & sabzi", calories: 550, protein: 22, carbs: 70, fats: 15, items: ["Dal", "2 roti", "Mixed veg sabzi", "Curd"] } : { name: "Chicken rice bowl", calories: 600, protein: 40, carbs: 60, fats: 15, items: ["Chicken 150g", "Rice 1 cup", "Salad"] },
+        dinner: isIndian ? { name: "Paneer & roti", calories: 500, protein: 25, carbs: 45, fats: 20, items: ["Paneer 100g", "2 roti", "Salad"] } : { name: "Grilled fish & veg", calories: 500, protein: 38, carbs: 30, fats: 20, items: ["Fish 150g", "Steamed veg", "Quinoa"] },
+        snacks: fallbackSnack,
+        daily_totals: { calories: p.target_cal || 2200, protein: p.protein_goal_g || 150, carbs: 220, fats: 60 },
+        notes: "A balanced starting plan — adjust portions to hit your targets.",
+      };
+    }
+
     await pool.execute(
       "INSERT INTO meal_plans (id, user_id, plan, diet, created_at) VALUES (?, ?, ?, ?, ?)",
       [newId(), req.user.id, JSON.stringify(plan), b.diet_type, nowIso()]

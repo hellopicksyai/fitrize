@@ -13,6 +13,18 @@ const SUGGESTIONS = [
   "How do I improve my squat?",
 ];
 
+// Strip AI-looking markdown so replies read like a human wrote them.
+function cleanReply(text = "") {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1")   // **bold** -> bold
+    .replace(/\*(.*?)\*/g, "$1")        // *italic* -> italic
+    .replace(/^\s*[\*\-•]\s+/gm, "")   // bullet markers at line start
+    .replace(/^#{1,6}\s+/gm, "")        // markdown headings
+    .replace(/`{1,3}([^`]*)`{1,3}/g, "$1") // code ticks
+    .replace(/\n{3,}/g, "\n\n")         // collapse extra blank lines
+    .trim();
+}
+
 export default function Coach() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -73,7 +85,7 @@ export default function Coach() {
             {messages.map((m,i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div data-testid={`msg-${m.role}-${i}`} className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"}`}>
-                  {m.text}
+                  {m.role === "assistant" ? cleanReply(m.text) : m.text}
                 </div>
               </div>
             ))}

@@ -22,7 +22,7 @@ export const startCheckout = async (plan, onSuccess) => {
       amount: data.amount,
       currency: data.currency,
       order_id: data.order_id,
-      name: "BitFits",
+      name: "Fitrize",
       description: data.plan_label,
       prefill: { name: data.user?.name, email: data.user?.email },
       theme: { color: "#007AFF" },
@@ -34,7 +34,7 @@ export const startCheckout = async (plan, onSuccess) => {
             signature: res.razorpay_signature,
             plan,
           });
-          toast.success(`Welcome to BitFits ${plan === "elite" ? "Elite" : "Pro"}!`);
+          toast.success(`Welcome to Fitrize ${plan === "elite" ? "Elite" : "Pro"}!`);
           onSuccess?.();
         } catch { toast.error("Payment verification failed"); }
       },

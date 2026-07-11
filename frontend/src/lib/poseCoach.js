@@ -18,6 +18,29 @@ const angle = (a, b, c) => {
   return (Math.acos(Math.max(-1, Math.min(1, dot / m))) * 180) / Math.PI;
 };
 
+// A landmark is "seen" if MediaPipe is reasonably confident about it.
+const seen = (p) => p && (p.visibility === undefined || p.visibility > 0.5);
+
+// Which landmarks each exercise NEEDS to give an accurate reading.
+const REQUIRED = {
+  "Squat": [L.LEFT_HIP, L.LEFT_KNEE, L.LEFT_ANKLE, L.RIGHT_KNEE],
+  "Push-ups": [L.LEFT_SHOULDER, L.LEFT_ELBOW, L.LEFT_WRIST, L.LEFT_HIP],
+  "Pull-ups": [L.LEFT_SHOULDER, L.LEFT_ELBOW, L.LEFT_WRIST],
+  "Shoulder Press": [L.LEFT_SHOULDER, L.LEFT_ELBOW, L.LEFT_WRIST],
+  "Bicep Curls": [L.LEFT_SHOULDER, L.LEFT_ELBOW, L.LEFT_WRIST],
+  "Lunges": [L.LEFT_HIP, L.LEFT_KNEE, L.LEFT_ANKLE],
+  "Plank": [L.LEFT_SHOULDER, L.LEFT_HIP, L.LEFT_ANKLE],
+  "Deadlift": [L.LEFT_SHOULDER, L.LEFT_HIP, L.LEFT_KNEE, L.LEFT_ANKLE],
+  "Bench Press": [L.LEFT_SHOULDER, L.LEFT_ELBOW, L.LEFT_WRIST],
+};
+
+// How well can we see the body parts this exercise needs? 0..1
+const visibilityFor = (ex, lm) => {
+  const need = REQUIRED[ex] || REQUIRED["Squat"];
+  const ok = need.filter((i) => seen(lm[i])).length;
+  return ok / need.length;
+};
+
 // Squat: knee angle. <100° = down, >160° = up. Track depth, knee-cave, torso angle.
 const analyzeSquat = (lm) => {
   const lKneeA = angle(lm[L.LEFT_HIP], lm[L.LEFT_KNEE], lm[L.LEFT_ANKLE]);
@@ -184,12 +207,17 @@ export const usePoseCoach = ({ exercise = "Squat" }) => {
   const holdStartRef = useRef(null);
   const startTimeRef = useRef(null);
   const scoresRef = useRef([]);
+  const lastRepAtRef = useRef(0);      // for debouncing reps
+  const [visible, setVisible] = useState(true); // is the body clearly seen?
   const [ready, setReady] = useState(false);
   const [live, setLive] = useState(false);
   const [reps, setReps] = useState(0);
+  const repsRef = useRef(0);
   const [score, setScore] = useState(95);
   const [cues, setCues] = useState([]);
   const [lastSession, setLastSession] = useState(null);
+  const [facingMode, setFacingMode] = useState("user"); // "user" = front, "environment" = back
+  const facingRef = useRef("user");
   const exerciseRef = useRef(exercise);
 
   useEffect(() => { exerciseRef.current = exercise; }, [exercise]);
@@ -237,10 +265,25 @@ export const usePoseCoach = ({ exercise = "Squat" }) => {
     if (res?.landmarks?.length) {
       const pts = res.landmarks[0];
       const draw = new DrawingUtils(ctx);
-      draw.drawConnectors(pts, PoseLandmarker.POSE_CONNECTIONS, { color: "#39FF14", lineWidth: 4 });
+      const ex = exerciseRef.current;
+
+      // How well can we see the parts this exercise needs?
+      const vis = visibilityFor(ex, pts);
+      const bodyVisible = vis >= 0.75;
+      setVisible(bodyVisible);
+
+      // Colour the skeleton green when we can track well, amber when we can't.
+      const skeletonColor = bodyVisible ? "#39FF14" : "#FF9F0A";
+      draw.drawConnectors(pts, PoseLandmarker.POSE_CONNECTIONS, { color: skeletonColor, lineWidth: 4 });
       draw.drawLandmarks(pts, { color: "#007AFF", radius: 5, lineWidth: 1 });
 
-      const ex = exerciseRef.current;
+      if (!bodyVisible) {
+        // Can't see enough of the body → don't count reps or give false form cues.
+        setCues(["Step back so your whole body is in frame"]);
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
       const analyzer = ANALYZERS[ex] || analyzeSquat;
       const analysis = analyzer(pts);
 
@@ -250,16 +293,23 @@ export const usePoseCoach = ({ exercise = "Squat" }) => {
         if (analysis.score >= 70) {
           if (!holdStartRef.current) holdStartRef.current = nowMs;
           const secs = Math.floor((nowMs - holdStartRef.current) / 1000);
+          repsRef.current = secs;
           setReps(secs);
         } else {
           holdStartRef.current = null;
         }
       } else {
-        // rep count: down → up transition
+        // rep count with hysteresis + debounce to prevent double-counts / jitter.
         if (analysis.phase === "down") lastPhaseRef.current = "down";
         if (analysis.phase === "up" && lastPhaseRef.current === "down") {
-          lastPhaseRef.current = "up";
-          setReps(r => r + 1);
+          const nowMs = performance.now();
+          // require at least 500ms since the last rep — a real rep can't be faster
+          if (nowMs - lastRepAtRef.current > 500) {
+            lastPhaseRef.current = "up";
+            lastRepAtRef.current = nowMs;
+            repsRef.current += 1;
+            setReps(r => r + 1);
+          }
         }
       }
       setScore(prev => {
@@ -268,6 +318,10 @@ export const usePoseCoach = ({ exercise = "Squat" }) => {
         return next;
       });
       setCues(analysis.issues);
+    } else {
+      // No person detected at all
+      setVisible(false);
+      setCues(["No person detected — make sure you're in view"]);
     }
     rafRef.current = requestAnimationFrame(loop);
   }, []);
@@ -276,19 +330,26 @@ export const usePoseCoach = ({ exercise = "Squat" }) => {
     if (!ready) return false;
     try {
       const s = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        video: { facingMode: facingRef.current, width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false,
       });
       streamRef.current = s;
       const v = videoRef.current;
-      if (v) { v.srcObject = s; await v.play(); }
+      if (v) {
+        v.srcObject = s;
+        // Keep the camera alive if the browser tries to pause it (fixes "camera switching off")
+        v.onloadedmetadata = () => v.play().catch(() => {});
+        await v.play().catch(() => {});
+      }
       setLive(true);
       setReps(0);
+      repsRef.current = 0;
       setLastSession(null);
       lastPhaseRef.current = "up";
       holdStartRef.current = null;
       startTimeRef.current = performance.now();
       scoresRef.current = [];
+      lastRepAtRef.current = 0;
       rafRef.current = requestAnimationFrame(loop);
       return true;
     } catch (e) {
@@ -296,6 +357,27 @@ export const usePoseCoach = ({ exercise = "Squat" }) => {
       return false;
     }
   }, [ready, loop]);
+
+  // Flip between front and back camera. If live, seamlessly restart the stream.
+  const switchCamera = useCallback(async () => {
+    const nextMode = facingRef.current === "user" ? "environment" : "user";
+    facingRef.current = nextMode;
+    setFacingMode(nextMode);
+    if (!streamRef.current) return; // not live yet, will apply on next start
+    // stop old tracks, get new stream with the new facing mode
+    streamRef.current.getTracks().forEach(t => t.stop());
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: nextMode, width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false,
+      });
+      streamRef.current = s;
+      const v = videoRef.current;
+      if (v) { v.srcObject = s; await v.play().catch(() => {}); }
+    } catch (e) {
+      console.error("Camera switch failed:", e);
+    }
+  }, []);
 
   const stop = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -307,16 +389,19 @@ export const usePoseCoach = ({ exercise = "Squat" }) => {
       const avg_form_score = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
       setLastSession({
         exercise: exerciseRef.current,
-        reps,
+        reps: repsRef.current,
         duration_sec,
         avg_form_score,
       });
     }
     startTimeRef.current = null;
     setLive(false);
-  }, [reps]);
+  }, []); // no deps → stable reference, camera never stops on rep change
 
-  useEffect(() => () => stop(), [stop]);
+  // Clean up the camera only when the component actually unmounts.
+  const stopRef = useRef(stop);
+  stopRef.current = stop;
+  useEffect(() => () => stopRef.current(), []);
 
-  return { videoRef, canvasRef, ready, live, reps, score, cues, start, stop };
+  return { videoRef, canvasRef, ready, live, reps, score, cues, visible, start, stop, switchCamera, facingMode, lastSession, clearSession: () => setLastSession(null) };
 };

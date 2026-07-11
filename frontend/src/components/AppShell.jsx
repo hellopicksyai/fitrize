@@ -87,7 +87,7 @@ export default function AppShell({ children }) {
           <div className="w-9 h-9 rounded-xl bg-primary grid place-items-center glow-primary">
             <Zap className="w-5 h-5 text-primary-foreground" strokeWidth={2.5} />
           </div>
-          <span className="display text-2xl">BitFits</span>
+          <span className="display text-2xl">Fitrize</span>
         </Link>
         <NavLinks loc={loc} isAdmin={user?.is_admin} />
         <UserFooter />
@@ -109,7 +109,7 @@ export default function AppShell({ children }) {
               <div className="px-5 py-5 flex items-center justify-between">
                 <Link to="/" className="flex items-center gap-2" onClick={() => setDrawer(false)}>
                   <div className="w-8 h-8 rounded-lg bg-primary grid place-items-center glow-primary"><Zap className="w-4 h-4 text-primary-foreground" strokeWidth={2.5}/></div>
-                  <span className="display text-xl">BitFits</span>
+                  <span className="display text-xl">Fitrize</span>
                 </Link>
                 <Button variant="ghost" size="icon" onClick={() => setDrawer(false)} data-testid="drawer-close" aria-label="Close menu">
                   <X className="w-5 h-5"/>
@@ -136,7 +136,7 @@ export default function AppShell({ children }) {
             </Button>
             <Link to="/app" className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-primary grid place-items-center"><Zap className="w-4 h-4 text-primary-foreground"/></div>
-              <span className="display text-xl">BitFits</span>
+              <span className="display text-xl">Fitrize</span>
             </Link>
           </div>
           <div className="flex gap-1 items-center">

@@ -19,10 +19,11 @@ router.post("/coach/chat", getCurrentUser, async (req, res, next) => {
     const b = v.value;
     const p = req.user.profile || {};
     const system =
-      `You are BitFits AI, the user's personal fitness & nutrition coach. The user's name is ${req.user.name || "Athlete"}. ` +
+      `You are Fitrize AI, the user's personal fitness & nutrition coach. The user's name is ${req.user.name || "Athlete"}. ` +
       `Profile: goal=${p.goal}, weight=${p.weight_kg}kg, height=${p.height_cm}cm, ` +
       `target_cal=${p.target_cal}, protein_goal=${p.protein_goal_g}g, experience=${p.experience}. ` +
-      "Be concise, motivational, evidence-based. Keep replies under 180 words. Use short paragraphs and bullet lists when useful.";
+      "Be concise, warm and motivational, like a real personal trainer texting a client. Keep replies under 150 words. " +
+      "Write in plain conversational sentences and short paragraphs. Do NOT use markdown, asterisks, bold, bullet points, headings, or any special formatting — just natural text as a person would type it.";
     const sessionId = b.session_id || `coach-${req.user.id}`;
     const reply = await llmChat(system, b.message);
     await pool.execute(

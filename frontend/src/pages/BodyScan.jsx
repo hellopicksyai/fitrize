@@ -1,8 +1,8 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ScanLine, Loader2, Upload } from "lucide-react";
+import { ScanLine, Loader2, Upload, Camera, Check, X, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 const fileToB64 = (file) => new Promise((res, rej) => {
@@ -12,16 +12,120 @@ const fileToB64 = (file) => new Promise((res, rej) => {
   r.readAsDataURL(file);
 });
 
+const HINTS = {
+  Front: "Face the camera, arms slightly out",
+  Side: "Turn 90° sideways, stand relaxed",
+  Back: "Face away from the camera",
+};
+
+// A real in-app camera modal — works on desktop (webcam) and mobile.
+function CameraModal({ label, onCapture, onClose }) {
+  const videoRef = useRef();
+  const streamRef = useRef();
+  const [ready, setReady] = useState(false);
+  const [facing, setFacing] = useState("environment");
+  const [error, setError] = useState("");
+
+  const openCamera = async (mode) => {
+    // stop any existing stream
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: mode }, audio: false,
+      });
+      streamRef.current = s;
+      if (videoRef.current) {
+        videoRef.current.srcObject = s;
+        await videoRef.current.play().catch(() => {});
+      }
+      setReady(true);
+      setError("");
+    } catch (e) {
+      setError("Couldn't access the camera. Check browser permissions, or use Upload instead.");
+    }
+  };
+
+  useEffect(() => {
+    openCamera(facing);
+    return () => streamRef.current?.getTracks().forEach((t) => t.stop());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const flip = () => {
+    const next = facing === "environment" ? "user" : "environment";
+    setFacing(next);
+    openCamera(next);
+  };
+
+  const snap = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = v.videoWidth;
+    canvas.height = v.videoHeight;
+    canvas.getContext("2d").drawImage(v, 0, 0);
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], `${label}.jpg`, { type: "image/jpeg" });
+        onCapture(file);
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        onClose();
+      }
+    }, "image/jpeg", 0.9);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur grid place-items-center p-4" data-testid="camera-modal">
+      <div className="bg-card rounded-3xl p-4 w-full max-w-md">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm font-medium">Take {label} photo</div>
+          <button onClick={() => { streamRef.current?.getTracks().forEach(t=>t.stop()); onClose(); }} data-testid="camera-close"><X className="w-5 h-5"/></button>
+        </div>
+        <div className="aspect-[3/4] rounded-2xl bg-black overflow-hidden grid place-items-center">
+          {error
+            ? <div className="text-sm text-muted-foreground text-center px-6">{error}</div>
+            : <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />}
+        </div>
+        {!error && (
+          <div className="flex items-center justify-center gap-3 mt-4">
+            <Button variant="outline" size="icon" className="rounded-full" onClick={flip} data-testid="camera-flip"><RotateCcw className="w-4 h-4"/></Button>
+            <Button onClick={snap} disabled={!ready} className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold px-8" data-testid="camera-snap">
+              <Camera className="w-4 h-4 mr-1"/> Capture
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const Slot = ({ label, preview, onPick, testid }) => {
-  const ref = useRef();
+  const uploadRef = useRef();
+  const [showCam, setShowCam] = useState(false);
   return (
     <Card className="p-4 rounded-2xl text-center glass glow-hover" data-testid={testid}>
-      <div className="text-xs text-accent uppercase tracking-widest mb-2">{label}</div>
-      <div className="aspect-[3/4] rounded-xl bg-secondary grid place-items-center overflow-hidden">
-        {preview ? <img src={preview} alt="" className="w-full h-full object-cover"/> : <ScanLine className="w-8 h-8 text-muted-foreground"/>}
+      <div className="text-xs text-accent uppercase tracking-widest mb-1">{label}</div>
+      <div className="text-[10px] text-muted-foreground mb-2">{HINTS[label]}</div>
+      <div className="aspect-[3/4] rounded-xl bg-secondary grid place-items-center overflow-hidden relative">
+        {preview
+          ? <><img src={preview} alt="" className="w-full h-full object-cover"/>
+              <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-accent grid place-items-center"><Check className="w-4 h-4 text-accent-foreground"/></div></>
+          : <ScanLine className="w-8 h-8 text-muted-foreground"/>}
       </div>
-      <input ref={ref} type="file" accept="image/*" className="hidden" onChange={e=>{ const f = e.target.files?.[0]; if (f) onPick(f); }}/>
-      <Button variant="outline" className="mt-3 rounded-full w-full" onClick={()=>ref.current.click()} data-testid={`${testid}-btn`}><Upload className="w-4 h-4 mr-1"/>Upload</Button>
+
+      <input ref={uploadRef} type="file" accept="image/*" className="hidden"
+        onChange={e=>{ const f = e.target.files?.[0]; if (f) onPick(f); e.target.value=""; }}/>
+
+      <div className="grid grid-cols-2 gap-2 mt-3">
+        <Button variant="outline" className="rounded-full" onClick={()=>uploadRef.current.click()} data-testid={`${testid}-upload`}>
+          <Upload className="w-3.5 h-3.5 mr-1"/>Upload
+        </Button>
+        <Button variant="outline" className="rounded-full" onClick={()=>setShowCam(true)} data-testid={`${testid}-camera`}>
+          <Camera className="w-3.5 h-3.5 mr-1"/>Camera
+        </Button>
+      </div>
+
+      {showCam && <CameraModal label={label} onCapture={onPick} onClose={()=>setShowCam(false)} />}
     </Card>
   );
 };
@@ -54,7 +158,7 @@ export default function BodyScan() {
       <div>
         <div className="text-xs text-accent uppercase tracking-widest">AI Body Scan</div>
         <h1 className="display text-4xl sm:text-5xl">Photo composition analysis</h1>
-        <p className="text-sm text-muted-foreground mt-1">Upload 3 photos · we estimate body fat, posture, symmetry & give focus areas.</p>
+        <p className="text-sm text-muted-foreground mt-1">Add 3 photos (Front, Side, Back) — upload from your gallery or take them with your camera. We estimate body fat, posture, symmetry & focus areas.</p>
       </div>
 
       <div className="grid sm:grid-cols-3 gap-4">

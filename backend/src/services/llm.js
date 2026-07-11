@@ -29,6 +29,24 @@ function toImageParts(images = []) {
   }));
 }
 
+// Retry helper: retries on transient errors (rate limits, timeouts, 5xx).
+async function withRetry(fn, tries = 3) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      const msg = String(e?.message || e);
+      const transient = /429|quota|rate|timeout|503|500|ECONNRESET|fetch failed/i.test(msg);
+      if (!transient || i === tries - 1) throw e;
+      // brief backoff: 0.8s, 1.6s
+      await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+    }
+  }
+  throw lastErr;
+}
+
 // Port of llm_json: returns parsed JSON (or { raw: <text> } on failure).
 export async function llmJson(system, prompt, images = []) {
   ensureKey();
@@ -37,8 +55,10 @@ export async function llmJson(system, prompt, images = []) {
     systemInstruction: system,
   });
   const parts = [{ text: prompt }, ...toImageParts(images)];
-  const result = await model.generateContent(parts);
-  const reply = result.response.text();
+  const reply = await withRetry(async () => {
+    const result = await model.generateContent(parts);
+    return result.response.text();
+  });
   const parsed = extractJson(reply);
   return Object.keys(parsed).length ? parsed : { raw: reply };
 }

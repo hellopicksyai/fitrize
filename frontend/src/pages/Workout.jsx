@@ -66,29 +66,43 @@ export default function Workout() {
             {plan.cardio && <p className="text-sm text-muted-foreground">Cardio · {plan.cardio}</p>}
           </Card>
 
-          <div className="grid md:grid-cols-2 gap-5">
-            {(plan.days || []).map((d, i) => (
-              <Card key={i} className="p-5 rounded-2xl glass glow-hover" data-testid={`day-${i}`}>
-                <div className="flex items-center justify-between">
-                  <div className="display text-2xl flex items-center gap-2"><Dumbbell className="w-5 h-5 text-primary"/>{d.day}</div>
-                  <div className="text-xs text-accent">{d.focus}</div>
-                </div>
-                <div className="mt-4 divide-y divide-border">
-                  {(d.exercises || []).map((ex, k) => (
-                    <div key={k} className="py-2.5 flex items-start justify-between gap-3" data-testid={`ex-${i}-${k}`}>
-                      <div>
-                        <div className="font-medium">{ex.name}</div>
-                        {ex.notes && <div className="text-xs text-muted-foreground mt-0.5">{ex.notes}</div>}
-                      </div>
-                      <div className="text-xs text-right whitespace-nowrap">
-                        <div className="font-semibold">{ex.sets}×{ex.reps}</div>
-                        <div className="text-muted-foreground">{ex.rest_sec}s rest</div>
-                      </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            {(plan.days || []).map((d, i) => {
+              const exercises = d.exercises || [];
+              const isRest = exercises.length === 0 ||
+                /rest|recovery|off/i.test(d.focus || "") ||
+                /rest|recovery|off/i.test(d.day || "");
+              return (
+                <Card key={i} className="p-4 rounded-2xl glass glow-hover" data-testid={`day-${i}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="display text-xl flex items-center gap-2"><Dumbbell className="w-4 h-4 text-primary"/>{d.day}</div>
+                    <div className="text-xs text-accent">{d.focus}</div>
+                  </div>
+                  {isRest ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-center" data-testid={`rest-${i}`}>
+                      <div className="text-4xl animate-bounce" style={{ animationDuration: "2s" }}>😴</div>
+                      <div className="text-sm font-medium mt-2">Rest Day</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">Recover, hydrate, sleep well. Muscles grow during rest.</div>
                     </div>
-                  ))}
-                </div>
-              </Card>
-            ))}
+                  ) : (
+                    <div className="mt-3 divide-y divide-border">
+                      {exercises.map((ex, k) => (
+                        <div key={k} className="py-2 flex items-start justify-between gap-3" data-testid={`ex-${i}-${k}`}>
+                          <div>
+                            <div className="font-medium text-sm">{ex.name}</div>
+                            {ex.notes && <div className="text-xs text-muted-foreground mt-0.5">{ex.notes}</div>}
+                          </div>
+                          <div className="text-xs text-right whitespace-nowrap">
+                            <div className="font-semibold">{ex.sets}×{ex.reps}</div>
+                            <div className="text-muted-foreground">{ex.rest_sec}s rest</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}

@@ -40,7 +40,7 @@ export default function Auth() {
         <div className="relative h-full flex flex-col justify-between p-12 text-white">
           <Link to="/" className="flex items-center gap-2" data-testid="auth-logo">
             <div className="w-9 h-9 rounded-xl bg-accent grid place-items-center"><Zap className="w-5 h-5 text-black" strokeWidth={2.5}/></div>
-            <span className="display text-2xl">BitFits</span>
+            <span className="display text-2xl">Fitrize</span>
           </Link>
           <div>
             <h2 className="display text-5xl">Train smarter.<br/>Transform faster.</h2>
@@ -54,7 +54,7 @@ export default function Auth() {
         <Card className="w-full max-w-md p-8 rounded-3xl">
           <Link to="/" className="lg:hidden flex items-center gap-2 mb-6">
             <div className="w-8 h-8 rounded-lg bg-primary grid place-items-center"><Zap className="w-4 h-4 text-primary-foreground"/></div>
-            <span className="display text-xl">BitFits</span>
+            <span className="display text-xl">Fitrize</span>
           </Link>
           <div className="display text-3xl">{mode === "login" ? "Welcome back" : "Create account"}</div>
           <p className="text-sm text-muted-foreground mt-1">{mode === "login" ? "Continue your transformation." : "Start your journey in 30 seconds."}</p>
@@ -68,7 +68,7 @@ export default function Auth() {
             )}
             <div>
               <Label htmlFor="email">Email</Label>
-              <Input id="email" data-testid="auth-email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@bitfits.app" className="mt-1.5 rounded-xl"/>
+              <Input id="email" data-testid="auth-email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@fitrize.app" className="mt-1.5 rounded-xl"/>
             </div>
             <div>
               <Label htmlFor="password">Password</Label>
