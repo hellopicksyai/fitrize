@@ -25,5 +25,5 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             npm ci --only=production
-            pm2 restart fitrize || pm2 start server.js --name fitrize
+            pm2 restart fitrize || pm2 start src/server.js --name fitrize
             pm2 save
