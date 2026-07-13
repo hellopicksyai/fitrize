@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-
+import path from "path";
+import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.js";
 import assessmentRoutes from "./routes/assessment.js";
 import mealRoutes from "./routes/meals.js";
@@ -21,11 +22,12 @@ import { pool } from "./config/db.js";
 
 dotenv.config();
 
-const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+const app = express();
 // Body limit raised because body-scan / food-image endpoints send base64 images.
 app.use(express.json({ limit: "25mb" }));
-
 // CORS — matches the FastAPI CORSMiddleware config.
 const origins = (process.env.CORS_ORIGINS || "*").split(",");
 app.use(
@@ -36,7 +38,6 @@ app.use(
     allowedHeaders: ["*"],
   })
 );
-
 // All routes are mounted under /api (FastAPI used APIRouter(prefix="/api")).
 const api = express.Router();
 api.use(authRoutes);
@@ -56,18 +57,23 @@ api.use(profileRoutes);
 api.use(adminRoutes);
 app.use("/api", api);
 
+// Serve React frontend build
+app.use(express.static(path.join(__dirname, "../../frontend/build")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../../frontend/build", "index.html"));
+});
+
 // Central error handler — converts thrown errors (incl. LLM 503) to JSON.
 app.use((err, req, res, _next) => {
   const status = err.status || 500;
   console.error("[error]", err.message);
   res.status(status).json({ detail: err.message || "Internal server error" });
 });
-
 const PORT = process.env.PORT || 8000;
 const server = app.listen(PORT, () => {
   console.log(`✓ BitFits API running on http://localhost:${PORT}`);
 });
-
 // Graceful shutdown (port of @app.on_event("shutdown")).
 process.on("SIGINT", async () => {
   await pool.end();
