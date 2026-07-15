@@ -3,7 +3,7 @@ import { pool, query } from "../config/db.js";
 import { getCurrentUser } from "../middleware/auth.js";
 import { newId, nowIso, today, parseJsonField } from "../utils/helpers.js";
 import { validate } from "../utils/validate.js";
-import { llmJson, llmChat } from "../services/llm.js";
+import { llmJson, llmChat, llmVideo } from "../services/llm.js";
 
 const router = Router();
 
@@ -18,14 +18,33 @@ router.post("/coach/chat", getCurrentUser, async (req, res, next) => {
     if (!v.ok) return res.status(422).json({ detail: v.error });
     const b = v.value;
     const p = req.user.profile || {};
+    const sessionId = b.session_id || `coach-${req.user.id}`;
+
+    // Load recent conversation so the coach REMEMBERS earlier turns
+    // (e.g. "I'm vegetarian" said 3 messages ago).
+    const past = await query(
+      "SELECT role_user, role_assistant FROM coach_messages WHERE user_id = ? AND session_id = ? ORDER BY created_at ASC LIMIT 20",
+      [req.user.id, sessionId]
+    );
+    const history = [];
+    for (const row of past) {
+      if (row.role_user) history.push({ role: "user", text: row.role_user });
+      if (row.role_assistant) history.push({ role: "assistant", text: row.role_assistant });
+    }
+
+    const diet = p.diet_type || p.diet || null;
     const system =
       `You are Fitrize AI, the user's personal fitness & nutrition coach. The user's name is ${req.user.name || "Athlete"}. ` +
       `Profile: goal=${p.goal}, weight=${p.weight_kg}kg, height=${p.height_cm}cm, ` +
-      `target_cal=${p.target_cal}, protein_goal=${p.protein_goal_g}g, experience=${p.experience}. ` +
+      `target_cal=${p.target_cal}, protein_goal=${p.protein_goal_g}g, experience=${p.experience}` +
+      (diet ? `, diet=${diet}` : "") + ". " +
+      "CRITICAL: Remember everything the user has told you earlier in this conversation — especially dietary restrictions. " +
+      "If the user has said they are vegetarian or vegan, you must NEVER suggest meat, chicken, fish, or (for vegan) eggs and dairy. " +
+      "Answer the exact question the user asked. Do not deflect, do not ask a question back unless you truly cannot proceed, and never reply with a generic greeting. " +
       "Be concise, warm and motivational, like a real personal trainer texting a client. Keep replies under 150 words. " +
       "Write in plain conversational sentences and short paragraphs. Do NOT use markdown, asterisks, bold, bullet points, headings, or any special formatting — just natural text as a person would type it.";
-    const sessionId = b.session_id || `coach-${req.user.id}`;
-    const reply = await llmChat(system, b.message);
+
+    const reply = await llmChat(system, b.message, history);
     await pool.execute(
       `INSERT INTO coach_messages (id, user_id, session_id, role_user, role_assistant, created_at)
        VALUES (?, ?, ?, ?, ?, ?)`,
@@ -118,6 +137,34 @@ router.get("/progress", getCurrentUser, async (req, res, next) => {
 });
 
 // ---------- Form Correction ----------
+// POST /api/form/analyze-video — upload a short clip, get a form review.
+// This is the "AI Form Check" model: record 10–20s after your set, get a score
+// and 3 concrete corrections (rather than trying to coach live mid-lift).
+router.post("/form/analyze-video", getCurrentUser, async (req, res, next) => {
+  try {
+    const v = validate(req.body, {
+      exercise: { type: "string", required: true },
+      video_base64: { type: "string", required: true },
+      mime_type: { type: "string", default: "video/mp4" },
+    });
+    if (!v.ok) return res.status(422).json({ detail: v.error });
+    const b = v.value;
+
+    const system =
+      "You are an elite strength coach reviewing a short video of a lift. " +
+      "Watch the movement and assess the athlete's form honestly. " +
+      'Respond ONLY with JSON (no markdown): {"score":0,"good":["...","..."],"improve":["...","..."],"top_fix":"","reps_seen":0}. ' +
+      "score is 0-100. 'good' lists what they did well. 'improve' lists specific faults. " +
+      "top_fix is the single most important thing to change next session. Be specific and practical.";
+    const prompt = `Exercise being performed: ${b.exercise}. Review this set and score the form.`;
+
+    const result = await llmVideo(system, prompt, b.video_base64, b.mime_type);
+    return res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/form/feedback
 router.post("/form/feedback", getCurrentUser, async (req, res, next) => {
   try {
@@ -200,6 +247,13 @@ router.get("/stats/dashboard", getCurrentUser, async (req, res, next) => {
       totals,
       water_glasses: water.length ? water[0].glasses : 0,
     };
+    // today's steps (from habits table; may not exist for all users)
+    let steps = 0;
+    try {
+      const st = await query("SELECT steps FROM habits WHERE user_id = ? AND date = ?", [req.user.id, today()]);
+      steps = st.length ? (st[0].steps || 0) : 0;
+    } catch { steps = 0; }
+
     return res.json({
       user: {
         name: req.user.name,
@@ -210,6 +264,7 @@ router.get("/stats/dashboard", getCurrentUser, async (req, res, next) => {
       },
       profile: p,
       today: todayData,
+      steps,
     });
   } catch (err) {
     next(err);

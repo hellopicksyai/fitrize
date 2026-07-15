@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -9,7 +10,7 @@ import Celebrate from "@/components/Celebrate";
 import { DashboardSkeleton } from "@/components/Skeletons";
 import { motion } from "framer-motion";
 import { stagger, rise } from "@/components/PageTransition";
-import { Flame, Trophy, Droplet, Plus, Brain, Dumbbell, Camera, Check, Target } from "lucide-react";
+import { Flame, Trophy, Droplet, Plus, Brain, Dumbbell, Camera, Check, Target, Footprints, ScanLine, Loader2 } from "lucide-react";
 
 const Stat = ({ label, value, sub, testid, accent, decimals = 0, suffix = "" }) => (
   <motion.div variants={rise}>
@@ -59,6 +60,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [celebrate, setCelebrate] = useState(false);
   const [analytics, setAnalytics] = useState(null);
+  const [stepInput, setStepInput] = useState("");
+  const [savingSteps, setSavingSteps] = useState(false);
 
   useEffect(() => {
     api.get("/stats/dashboard")
@@ -83,6 +86,21 @@ export default function Dashboard() {
   const t = data?.today?.totals || { calories: 0, protein: 0, carbs: 0, fats: 0 };
   const u = data?.user || {};
   const water = data?.today?.water_glasses || 0;
+  const steps = data?.steps || 0;
+
+  const saveSteps = async () => {
+    if (stepInput === "") return;
+    setSavingSteps(true);
+    try {
+      await api.post("/habits", { steps: parseInt(stepInput) });
+      const r = await api.get("/stats/dashboard");
+      setData(r.data);
+      setStepInput("");
+      toast.success("Steps updated");
+    } catch {
+      toast.error("Couldn't save steps");
+    } finally { setSavingSteps(false); }
+  };
   const target = p.target_cal || 2200;
   const proteinGoal = p.protein_goal_g || 150;
   const pctGoal = Math.round((t.calories / target) * 100) || 0;
@@ -99,7 +117,8 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground mt-1">Goal · {p.goal || "—"} · Target {target} kcal · Protein {proteinGoal}g</p>
         </div>
         <div className="flex gap-2">
-          <Link to="/app/tracker"><Button data-testid="dash-log-meal" className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold glow-accent"><Plus className="w-4 h-4 mr-1"/>Log meal</Button></Link>
+          <Link to="/app/nutrition"><Button data-testid="dash-log-meal" className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold glow-accent"><Plus className="w-4 h-4 mr-1"/>Log meal</Button></Link>
+          <Link to="/app/progress"><Button variant="outline" className="rounded-full" data-testid="dash-body-scan"><ScanLine className="w-4 h-4 mr-1"/>Body Scan</Button></Link>
           <Link to="/app/coach"><Button variant="outline" className="rounded-full" data-testid="dash-ask-coach"><Brain className="w-4 h-4 mr-1"/>Ask coach</Button></Link>
         </div>
       </div>
@@ -144,15 +163,21 @@ export default function Dashboard() {
         <motion.div variants={rise}>
           <Card className="p-5 rounded-2xl glass glow-hover h-full" data-testid="card-water">
             <div className="flex items-center justify-between"><div className="text-xs text-muted-foreground">Water</div><Droplet className="w-4 h-4 text-primary"/></div>
-            <div className="display text-4xl mt-2"><CountUp value={water} /><span className="text-muted-foreground text-2xl">/8</span></div>
-            <div className="text-xs text-muted-foreground mt-1">glasses · update in tracker</div>
+            <div className="display text-4xl mt-2"><CountUp value={+((water||0)*0.25).toFixed(2)} /><span className="text-muted-foreground text-2xl">/3 L</span></div>
+            <div className="text-xs text-muted-foreground mt-1">litres · update in nutrition</div>
           </Card>
         </motion.div>
         <motion.div variants={rise}>
-          <Card className="p-5 rounded-2xl glass glow-hover h-full" data-testid="card-streak">
-            <div className="flex items-center justify-between"><div className="text-xs text-muted-foreground">Daily Flame</div><Flame className="w-4 h-4 text-accent"/></div>
-            <div className="display text-4xl mt-2"><CountUp value={u.streak || 0} /> days</div>
-            <div className="text-xs text-muted-foreground mt-1">Tier · {u.tier || "free"}</div>
+          <Card className="p-5 rounded-2xl glass glow-hover h-full" data-testid="card-steps">
+            <div className="flex items-center justify-between"><div className="text-xs text-muted-foreground">Steps today</div><Footprints className="w-4 h-4 text-accent"/></div>
+            <div className="display text-4xl mt-2"><CountUp value={steps} /><span className="text-muted-foreground text-2xl">/10k</span></div>
+            <div className="flex gap-2 mt-2">
+              <input type="number" value={stepInput} onChange={e=>setStepInput(e.target.value)} placeholder="Enter steps"
+                className="flex-1 min-w-0 text-sm rounded-lg bg-secondary px-2 py-1 outline-none" data-testid="steps-input"/>
+              <Button size="sm" className="rounded-lg" onClick={saveSteps} disabled={savingSteps} data-testid="steps-save">
+                {savingSteps ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : "Save"}
+              </Button>
+            </div>
           </Card>
         </motion.div>
       </motion.div>

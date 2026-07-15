@@ -3,9 +3,11 @@ import { api } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Play, Square, Loader2, Sparkles, SwitchCamera } from "lucide-react";
+import { Camera, Play, Square, Loader2, Sparkles, SwitchCamera, Video } from "lucide-react";
 import { toast } from "sonner";
 import { usePoseCoach, SUPPORTED_EXERCISES } from "@/lib/poseCoach";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import VideoFormCheck from "@/pages/VideoFormCheck";
 
 const EXERCISES = ["Squat","Push-ups","Pull-ups","Shoulder Press","Bicep Curls","Lunges","Plank","Deadlift","Bench Press"];
 const REAL_TIME = new Set(SUPPORTED_EXERCISES);
@@ -57,9 +59,9 @@ export default function FormCorrection() {
     <div data-testid="form-page" className="space-y-6">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <div className="text-xs text-accent uppercase tracking-widest">Premium · Live Pose AI</div>
-          <h1 className="display text-4xl sm:text-5xl">Form Correction</h1>
-          <p className="text-sm text-muted-foreground mt-1">MediaPipe real-time pose detection · live rep counting & form scoring for all 9 exercises.</p>
+          <div className="text-xs text-accent uppercase tracking-widest">Premium · AI Form Coach</div>
+          <h1 className="display text-4xl sm:text-5xl">AI Form Coach</h1>
+          <p className="text-sm text-muted-foreground mt-1">Train live with real-time pose tracking, or upload a clip of your set for a full form review.</p>
         </div>
         <div className="text-xs">
           <span className={`px-2.5 py-1 rounded-full ${ready ? "bg-accent/20 text-accent" : "bg-secondary text-muted-foreground"}`}>
@@ -68,6 +70,17 @@ export default function FormCorrection() {
         </div>
       </div>
 
+      <Tabs defaultValue="live" className="w-full">
+        <TabsList className="rounded-full" data-testid="form-tabs">
+          <TabsTrigger value="live" className="rounded-full" data-testid="tab-live"><Camera className="w-4 h-4 mr-1.5"/>Live Trainer</TabsTrigger>
+          <TabsTrigger value="upload" className="rounded-full" data-testid="tab-upload"><Video className="w-4 h-4 mr-1.5"/>Upload Video</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="upload" className="mt-5">
+          <VideoFormCheck />
+        </TabsContent>
+
+        <TabsContent value="live" className="mt-5">
       <div className="grid lg:grid-cols-3 gap-5">
         <Card className="lg:col-span-2 p-0 rounded-3xl overflow-hidden relative aspect-[4/3] bg-black">
           <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" muted playsInline data-testid="form-video"/>
@@ -180,6 +193,8 @@ export default function FormCorrection() {
           )}
         </div>
       </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

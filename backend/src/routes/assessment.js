@@ -39,7 +39,7 @@ router.post("/assessment", getCurrentUser, async (req, res, next) => {
       goal: {
         type: "string",
         required: true,
-        enum: ["weight_loss", "fat_loss", "muscle_gain", "strength", "athletic", "general"],
+        enum: ["weight_loss", "weight_gain", "fat_loss", "muscle_gain", "strength", "athletic", "general"],
       },
       experience: {
         type: "string",
@@ -47,6 +47,10 @@ router.post("/assessment", getCurrentUser, async (req, res, next) => {
         enum: ["beginner", "intermediate", "advanced"],
       },
       injuries: { type: "string", default: "" },
+      health_conditions: { type: "array", default: [] },
+      current_injuries: { type: "array", default: [] },
+      pain_level: { type: "int", default: 0 },
+      coach_notes: { type: "string", default: "" },
     });
     if (!v.ok) return res.status(422).json({ detail: v.error });
     const body = v.value;
@@ -60,6 +64,7 @@ router.post("/assessment", getCurrentUser, async (req, res, next) => {
 
     const target = {
       weight_loss: tdee - 500,
+      weight_gain: tdee + 400,
       fat_loss: tdee - 400,
       muscle_gain: tdee + 350,
       strength: tdee + 200,
@@ -69,6 +74,7 @@ router.post("/assessment", getCurrentUser, async (req, res, next) => {
 
     const weeklyGoal = {
       weight_loss: "Lose 0.5 kg/week",
+      weight_gain: "Gain 0.5 kg/week with a calorie surplus",
       fat_loss: "Lose 0.4 kg/week with strength training",
       muscle_gain: "Gain 0.25 kg/week with progressive overload",
       strength: "Add 2.5 kg to compound lifts/week",

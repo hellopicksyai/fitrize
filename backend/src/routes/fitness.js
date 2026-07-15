@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { pool } from "../config/db.js";
+import { pool, query, queryOne } from "../config/db.js";
 import { getCurrentUser } from "../middleware/auth.js";
 import { newId, nowIso } from "../utils/helpers.js";
 import { validate } from "../utils/validate.js";
-import { llmJson } from "../services/llm.js";
+import { llmJson, llmChat } from "../services/llm.js";
 
 const router = Router();
 
@@ -100,6 +100,63 @@ router.post("/workouts/generate", getCurrentUser, async (req, res, next) => {
       [newId(), req.user.id, JSON.stringify(plan), nowIso()]
     );
     return res.json(plan);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/progress-insights — personalized AI insight from the user's real data.
+// This is the "Gemini explains YOUR data" model (items 12 & 13): the app computes
+// the numbers, the AI just phrases them personally.
+router.get("/progress-insights", getCurrentUser, async (req, res, next) => {
+  try {
+    const uid = req.user.id;
+    const p = req.user.profile || {};
+
+    // weight trend (first vs latest in last 8 weeks)
+    const weights = await query(
+      "SELECT weight_kg, date FROM progress WHERE user_id = ? ORDER BY date ASC",
+      [uid]
+    );
+    // strength: biggest PR jumps
+    const prs = await query(
+      "SELECT exercise, best_weight, best_reps FROM personal_records WHERE user_id = ? ORDER BY best_weight DESC LIMIT 5",
+      [uid]
+    );
+    const workoutCount = (await queryOne("SELECT COUNT(*) AS c FROM workout_logs WHERE user_id = ?", [uid]))?.c || 0;
+
+    // Build a factual summary the AI will phrase (app computes, AI explains)
+    const facts = [];
+    if (weights.length >= 2) {
+      const first = weights[0], last = weights[weights.length - 1];
+      const diff = (last.weight_kg - first.weight_kg).toFixed(1);
+      facts.push(`Weight changed from ${first.weight_kg}kg to ${last.weight_kg}kg (${diff >= 0 ? "+" : ""}${diff}kg).`);
+    }
+    if (prs.length) {
+      facts.push("Top lifts: " + prs.map(pr => `${pr.exercise} ${Math.round(pr.best_weight)}kg×${pr.best_reps}`).join(", ") + ".");
+    }
+    facts.push(`${workoutCount} workouts logged.`);
+
+    let insight = "";
+    if (facts.length) {
+      const system =
+        "You are the user's fitness coach. Turn these facts into 2-3 short, encouraging, PERSONALIZED sentences. " +
+        "Reference the actual numbers. No markdown, no bullet points, plain text. " +
+        `The user's goal is ${p.goal || "general fitness"}.`;
+      try {
+        insight = await llmChat(system, "Facts about my progress: " + facts.join(" "));
+      } catch {
+        insight = "";
+      }
+    }
+
+    return res.json({
+      insight: insight.trim(),
+      facts,
+      weight_points: weights,
+      personal_records: prs,
+      workout_count: workoutCount,
+    });
   } catch (err) {
     next(err);
   }

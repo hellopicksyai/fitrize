@@ -24,7 +24,7 @@ dotenv.config();
 const app = express();
 
 // Body limit raised because body-scan / food-image endpoints send base64 images.
-app.use(express.json({ limit: "25mb" }));
+app.use(express.json({ limit: "60mb" })); // raised for short workout video uploads
 
 // CORS — matches the FastAPI CORSMiddleware config.
 const origins = (process.env.CORS_ORIGINS || "*").split(",");

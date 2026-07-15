@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Loader2, TrendingUp, BarChart3, ScanLine, ClipboardList } from "lucide-react";
+import { Plus, Loader2, TrendingUp, BarChart3, ScanLine, ClipboardList , Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from "recharts";
 
@@ -17,9 +17,13 @@ function LogPanel() {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState({ weight_kg: "", body_fat: "", waist_cm: "" });
   const [busy, setBusy] = useState(false);
+  const [insight, setInsight] = useState("");
 
   const load = () => api.get("/progress").then(r => setItems(r.data)).catch(() => {});
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    api.get("/progress-insights").then(r => setInsight(r.data?.insight || "")).catch(() => {});
+  }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -40,6 +44,15 @@ function LogPanel() {
 
   return (
     <div className="space-y-5">
+      {insight && (
+        <Card className="p-5 rounded-2xl glass grad-border" data-testid="ai-insight">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4 text-accent"/>
+            <div className="text-xs text-accent uppercase tracking-widest">AI Insights</div>
+          </div>
+          <p className="text-sm leading-relaxed">{insight}</p>
+        </Card>
+      )}
       <Card className="p-5 rounded-2xl glass glow-hover">
         <form onSubmit={submit} className="grid sm:grid-cols-4 gap-3 items-end">
           <div><Label>Weight (kg)</Label><Input required type="number" step="0.1" value={form.weight_kg} onChange={e=>setForm({...form, weight_kg:e.target.value})} className="mt-1 rounded-xl" data-testid="prog-weight"/></div>
@@ -94,16 +107,16 @@ export default function Progress() {
         <p className="text-sm text-muted-foreground mt-1">Log measurements, view analytics and scan your body — all in one place.</p>
       </div>
 
-      <Tabs defaultValue="log" className="w-full">
+      <Tabs defaultValue="scan" className="w-full">
         <TabsList className="rounded-full" data-testid="progress-tabs">
+          <TabsTrigger value="scan" className="rounded-full" data-testid="tab-scan"><ScanLine className="w-4 h-4 mr-1.5"/>Body Scan</TabsTrigger>
           <TabsTrigger value="log" className="rounded-full" data-testid="tab-log"><ClipboardList className="w-4 h-4 mr-1.5"/>Log & History</TabsTrigger>
           <TabsTrigger value="analytics" className="rounded-full" data-testid="tab-analytics"><BarChart3 className="w-4 h-4 mr-1.5"/>Analytics</TabsTrigger>
-          <TabsTrigger value="scan" className="rounded-full" data-testid="tab-scan"><ScanLine className="w-4 h-4 mr-1.5"/>Body Scan</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="scan" className="mt-5"><BodyScanPanel /></TabsContent>
         <TabsContent value="log" className="mt-5"><LogPanel /></TabsContent>
         <TabsContent value="analytics" className="mt-5"><AnalyticsPanel /></TabsContent>
-        <TabsContent value="scan" className="mt-5"><BodyScanPanel /></TabsContent>
       </Tabs>
     </div>
   );

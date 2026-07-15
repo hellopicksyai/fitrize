@@ -16,7 +16,7 @@ const fileToB64 = (file) => new Promise((res, rej) => {
   r.readAsDataURL(file);
 });
 
-export default function CalorieTracker() {
+export default function CalorieTrackerPanel() {
   const [today, setToday] = useState({ meals: [], totals: {}, water_glasses: 0 });
   const [busy, setBusy] = useState(false);
   const [manual, setManual] = useState({ name: "", calories: 0, protein: 0, carbs: 0, fats: 0, meal_type: "lunch" });
@@ -115,10 +115,7 @@ export default function CalorieTracker() {
 
   return (
     <div data-testid="tracker-page" className="space-y-6">
-      <div>
-        <div className="text-xs text-accent uppercase tracking-widest">Tracker</div>
-        <h1 className="display text-4xl sm:text-5xl">Calorie tracker</h1>
-      </div>
+      
 
       <div className="grid md:grid-cols-4 gap-4">
         {[

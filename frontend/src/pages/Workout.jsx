@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Dumbbell, Sparkles } from "lucide-react";
+import { Loader2, Dumbbell, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Workout() {
@@ -12,15 +12,46 @@ export default function Workout() {
   const [days, setDays] = useState(4);
   const [busy, setBusy] = useState(false);
   const [plan, setPlan] = useState(null);
+  const [logging, setLogging] = useState(null); // index of day being logged
+  const [loggedDays, setLoggedDays] = useState({});
 
   const gen = async () => {
     setBusy(true);
     try {
       const { data } = await api.post("/workouts/generate", { workout_type: type, days_per_week: +days, equipment: [] });
       setPlan(data);
+      setLoggedDays({});
       toast.success("Workout generated");
     } catch { toast.error("Failed"); }
     finally { setBusy(false); }
+  };
+
+  // Auto-log: turn a generated day's exercises into a saved workout automatically,
+  // no manual set entry. Parses "3×8-12" into sets/reps.
+  const autoLog = async (day, i) => {
+    setLogging(i);
+    try {
+      const sets = [];
+      for (const ex of (day.exercises || [])) {
+        const setCount = parseInt(String(ex.sets)) || 3;
+        const repsMatch = String(ex.reps).match(/\d+/);
+        const reps = repsMatch ? parseInt(repsMatch[0]) : 10;
+        for (let s = 0; s < setCount; s++) {
+          sets.push({ exercise: ex.name, weight_kg: 0, reps });
+        }
+      }
+      if (!sets.length) { toast.error("Nothing to log for this day."); setLogging(null); return; }
+      const { data } = await api.post("/workout-logs", {
+        name: `${day.day} · ${day.focus || "Workout"}`,
+        notes: "Auto-logged from generated plan",
+        duration_sec: 0,
+        sets,
+      });
+      setLoggedDays((p) => ({ ...p, [i]: true }));
+      toast.success(`Logged! +${data.xp_earned || 20} XP${data.prs?.length ? ` · ${data.prs.length} PR!` : ""}`);
+    } catch {
+      toast.error("Couldn't auto-log. Try again.");
+    } finally { setLogging(null); }
   };
 
   return (
@@ -98,6 +129,13 @@ export default function Workout() {
                           </div>
                         </div>
                       ))}
+                      <div className="pt-3">
+                        <Button size="sm" onClick={() => autoLog(d, i)} disabled={logging === i || loggedDays[i]}
+                          data-testid={`autolog-${i}`}
+                          className={`rounded-full w-full ${loggedDays[i] ? "bg-secondary text-muted-foreground" : "bg-accent text-accent-foreground hover:bg-accent/90 font-bold"}`}>
+                          {logging === i ? <Loader2 className="w-4 h-4 animate-spin"/> : loggedDays[i] ? <><Check className="w-4 h-4 mr-1"/>Logged</> : <><Check className="w-4 h-4 mr-1"/>Mark done · auto-log</>}
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </Card>

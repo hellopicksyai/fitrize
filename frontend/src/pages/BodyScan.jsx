@@ -155,11 +155,10 @@ export default function BodyScan() {
 
   return (
     <div data-testid="bodyscan-page" className="space-y-6">
-      <p className="text-sm text-muted-foreground">Add 3 photos (Front, Side, Back) — upload from your gallery or take them with your camera. We estimate body fat, posture, symmetry & focus areas.</p>
+      <p className="text-sm text-muted-foreground">Add 2 photos (Front & Back) — upload from your gallery or take them with your camera. We estimate body fat, posture, symmetry & focus areas.</p>
 
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 gap-4">
         <Slot label="Front" preview={previews.front} onPick={pick("front")} testid="slot-front"/>
-        <Slot label="Side" preview={previews.side} onPick={pick("side")} testid="slot-side"/>
         <Slot label="Back" preview={previews.back} onPick={pick("back")} testid="slot-back"/>
       </div>
 

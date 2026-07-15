@@ -64,12 +64,44 @@ export async function llmJson(system, prompt, images = []) {
 }
 
 // Port of llm_chat: returns plain text reply.
-export async function llmChat(system, prompt) {
+// Analyze a short video (e.g. a lifting set) and return structured JSON.
+// Gemini accepts video as inline base64, just like images.
+export async function llmVideo(system, prompt, videoBase64, mimeType = "video/mp4") {
   ensureKey();
   const model = genAI.getGenerativeModel({
     model: MODEL,
     systemInstruction: system,
   });
-  const result = await model.generateContent([{ text: prompt }]);
-  return result.response.text();
+  const reply = await withRetry(async () => {
+    const result = await model.generateContent([
+      { text: prompt },
+      { inlineData: { data: videoBase64, mimeType } },
+    ]);
+    return result.response.text();
+  });
+  const parsed = extractJson(reply);
+  return Object.keys(parsed).length ? parsed : { raw: reply };
+}
+
+// llmChat with conversation memory.
+// history: [{ role: "user"|"model", text: "..." }] — earlier turns of this chat.
+export async function llmChat(system, prompt, history = []) {
+  ensureKey();
+  const model = genAI.getGenerativeModel({
+    model: MODEL,
+    systemInstruction: system,
+  });
+
+  return await withRetry(async () => {
+    // Gemini's chat API keeps the whole conversation in context, so the coach
+    // remembers things like "I'm vegetarian" from earlier messages.
+    const chat = model.startChat({
+      history: history.map((h) => ({
+        role: h.role === "assistant" ? "model" : "user",
+        parts: [{ text: h.text }],
+      })),
+    });
+    const result = await chat.sendMessage(prompt);
+    return result.response.text();
+  });
 }

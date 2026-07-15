@@ -12,15 +12,19 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { ArrowRight, Loader2 } from "lucide-react";
 
-const STEPS = ["Basics", "Body", "Activity", "Goal"];
+const STEPS = ["Basics", "Body", "Activity", "Medical", "Goal"];
+
+const HEALTH_CONDITIONS = ["None","High blood pressure","Diabetes","Heart condition","Asthma / Breathing issues","High cholesterol","Arthritis","Osteoporosis","PCOS","Thyroid disorder","Recent surgery","Pregnancy / Postpartum","Other"];
+const INJURY_AREAS = ["None","Neck","Shoulder","Elbow","Wrist","Lower back","Hip","Knee","Ankle"];
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     age: 28, gender: "male", height_cm: 178, weight_kg: 76,
-    body_fat: 18, activity_level: "moderate", goal: "fat_loss",
+    body_fat: "", activity_level: "moderate", goal: "muscle_gain",
     experience: "intermediate", injuries: "",
+    health_conditions: [], current_injuries: [], pain_level: 0, coach_notes: "",
   });
   const { refresh } = useAuth();
   const nav = useNavigate();
@@ -29,7 +33,15 @@ export default function Onboarding() {
   const submit = async () => {
     setBusy(true);
     try {
-      await api.post("/assessment", form);
+      // fill sensible defaults for any left blank
+      const payload = {
+        ...form,
+        age: form.age === "" ? 25 : form.age,
+        height_cm: form.height_cm === "" ? 170 : form.height_cm,
+        weight_kg: form.weight_kg === "" ? 70 : form.weight_kg,
+        body_fat: form.body_fat === "" ? null : form.body_fat,
+      };
+      await api.post("/assessment", payload);
       await refresh();
       toast.success("Profile ready! Generating your dashboard…");
       nav("/app");
@@ -51,7 +63,7 @@ export default function Onboarding() {
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label>Age</Label>
-              <Input data-testid="onb-age" type="number" value={form.age} onChange={e=>set("age")(parseInt(e.target.value||0))} className="mt-1.5 rounded-xl"/>
+              <Input data-testid="onb-age" type="number" value={form.age} onChange={e=>set("age")(e.target.value === "" ? "" : parseInt(e.target.value))} placeholder="e.g. 28" className="mt-1.5 rounded-xl"/>
             </div>
             <div>
               <Label>Gender</Label>
@@ -71,15 +83,15 @@ export default function Onboarding() {
           <div className="grid sm:grid-cols-3 gap-4">
             <div>
               <Label>Height (cm)</Label>
-              <Input data-testid="onb-height" type="number" value={form.height_cm} onChange={e=>set("height_cm")(parseFloat(e.target.value||0))} className="mt-1.5 rounded-xl"/>
+              <Input data-testid="onb-height" type="number" value={form.height_cm} onChange={e=>set("height_cm")(e.target.value === "" ? "" : parseFloat(e.target.value))} placeholder="e.g. 178" className="mt-1.5 rounded-xl"/>
             </div>
             <div>
               <Label>Weight (kg)</Label>
-              <Input data-testid="onb-weight" type="number" value={form.weight_kg} onChange={e=>set("weight_kg")(parseFloat(e.target.value||0))} className="mt-1.5 rounded-xl"/>
+              <Input data-testid="onb-weight" type="number" value={form.weight_kg} onChange={e=>set("weight_kg")(e.target.value === "" ? "" : parseFloat(e.target.value))} placeholder="e.g. 76" className="mt-1.5 rounded-xl"/>
             </div>
             <div>
               <Label>Body Fat %</Label>
-              <Input data-testid="onb-bodyfat" type="number" value={form.body_fat} onChange={e=>set("body_fat")(parseFloat(e.target.value||0))} className="mt-1.5 rounded-xl"/>
+              <Input data-testid="onb-bodyfat" type="number" value={form.body_fat} onChange={e=>set("body_fat")(e.target.value === "" ? "" : parseFloat(e.target.value))} placeholder="optional" className="mt-1.5 rounded-xl"/>
             </div>
           </div>
         )}
@@ -118,13 +130,61 @@ export default function Onboarding() {
         )}
 
         {step === 3 && (
+          <div className="space-y-5" data-testid="onb-medical">
+            <div>
+              <Label>Do you have any of the following? (select all that apply)</Label>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {HEALTH_CONDITIONS.map(c => {
+                  const active = form.health_conditions.includes(c);
+                  return (
+                    <button key={c} type="button" data-testid={`hc-${c}`}
+                      onClick={()=>set("health_conditions")(active ? form.health_conditions.filter(x=>x!==c) : [...form.health_conditions.filter(x=>c==="None"?false:x!=="None"), c].filter(x=>c!=="None"||x==="None"))}
+                      className={`text-left text-sm px-3 py-2 rounded-xl border transition ${active ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-muted-foreground"}`}>
+                      {c}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <Label>Current injuries (select all that apply)</Label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {INJURY_AREAS.map(c => {
+                  const active = form.current_injuries.includes(c);
+                  return (
+                    <button key={c} type="button" data-testid={`inj-${c}`}
+                      onClick={()=>set("current_injuries")(active ? form.current_injuries.filter(x=>x!==c) : [...form.current_injuries.filter(x=>c==="None"?false:x!=="None"), c])}
+                      className={`text-sm px-3 py-1.5 rounded-full border transition ${active ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-muted-foreground"}`}>
+                      {c}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <Label>Pain level: <span className="text-accent font-bold">{form.pain_level}</span> / 10</Label>
+              <input type="range" min="0" max="10" value={form.pain_level}
+                onChange={e=>set("pain_level")(parseInt(e.target.value))}
+                className="w-full mt-2 accent-[#39FF14]" data-testid="onb-pain"/>
+            </div>
+
+            <div>
+              <Label>Anything else you'd like your AI coach to know?</Label>
+              <Textarea data-testid="onb-coach-notes" value={form.coach_notes} onChange={e=>set("coach_notes")(e.target.value)} placeholder="Optional — goals, preferences, constraints…" className="mt-1.5 rounded-xl"/>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
           <div>
             <Label>Primary Goal</Label>
             <Select value={form.goal} onValueChange={set("goal")}>
               <SelectTrigger data-testid="onb-goal" className="mt-1.5 rounded-xl"><SelectValue/></SelectTrigger>
               <SelectContent>
                 <SelectItem value="weight_loss">Weight loss</SelectItem>
-                <SelectItem value="fat_loss">Fat loss</SelectItem>
+                <SelectItem value="weight_gain">Gain weight</SelectItem>
                 <SelectItem value="muscle_gain">Muscle gain</SelectItem>
                 <SelectItem value="strength">Strength</SelectItem>
                 <SelectItem value="athletic">Athletic performance</SelectItem>

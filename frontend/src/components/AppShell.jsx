@@ -13,15 +13,11 @@ import {
 
 const links = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, testid: "nav-dashboard" },
-  { to: "/app/tracker", label: "Calorie Tracker", icon: Utensils, testid: "nav-tracker" },
-  { to: "/app/nutrition", label: "Meal Plan", icon: Utensils, testid: "nav-nutrition" },
+  { to: "/app/nutrition", label: "Nutrition", icon: Utensils, testid: "nav-nutrition" },
   { to: "/app/workout", label: "Workout", icon: Dumbbell, testid: "nav-workout" },
-  { to: "/app/log-workout", label: "Log Workout", icon: ClipboardList, testid: "nav-log-workout" },
-  { to: "/app/form", label: "Form Correction", icon: Camera, testid: "nav-form" },
+  { to: "/app/form", label: "AI Form Coach", icon: Camera, testid: "nav-form" },
   { to: "/app/coach", label: "AI Coach", icon: MessageSquare, testid: "nav-coach" },
   { to: "/app/progress", label: "Progress", icon: TrendingUp, testid: "nav-progress" },
-  { to: "/app/habits", label: "Habits", icon: Target, testid: "nav-habits" },
-  { to: "/app/achievements", label: "Achievements", icon: Award, testid: "nav-achievements" },
   { to: "/app/profile", label: "Profile", icon: User, testid: "nav-profile" },
   { to: "/app/feedback", label: "Feedback", icon: MessageSquarePlus, testid: "nav-feedback" },
 ];
