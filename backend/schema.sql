@@ -145,3 +145,75 @@ CREATE TABLE IF NOT EXISTS feedback (
   INDEX idx_feedback_user (user_id),
   INDEX idx_feedback_created (created_at)
 ) ENGINE=InnoDB;
+
+-- workout_logs / workout_sets / personal_records ------------------------------
+CREATE TABLE IF NOT EXISTS workout_logs (
+  id            CHAR(36)     NOT NULL PRIMARY KEY,
+  user_id       CHAR(36)     NOT NULL,
+  name          VARCHAR(255) NOT NULL DEFAULT 'Workout',
+  notes         TEXT         NULL,
+  duration_sec  INT          NOT NULL DEFAULT 0,
+  total_volume  DOUBLE       NOT NULL DEFAULT 0,
+  total_sets    INT          NOT NULL DEFAULT 0,
+  date          VARCHAR(20)  NOT NULL,
+  created_at    VARCHAR(40)  NOT NULL,
+  INDEX idx_workoutlogs_user (user_id),
+  INDEX idx_workoutlogs_created (created_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS workout_sets (
+  id          CHAR(36)     NOT NULL PRIMARY KEY,
+  log_id      CHAR(36)     NOT NULL,
+  user_id     CHAR(36)     NOT NULL,
+  exercise    VARCHAR(255) NOT NULL,
+  set_number  INT          NOT NULL,
+  weight_kg   DOUBLE       NOT NULL DEFAULT 0,
+  reps        INT          NOT NULL DEFAULT 0,
+  is_pr       TINYINT(1)   NOT NULL DEFAULT 0,
+  created_at  VARCHAR(40)  NOT NULL,
+  INDEX idx_workoutsets_log (log_id),
+  INDEX idx_workoutsets_user (user_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS personal_records (
+  id           CHAR(36)     NOT NULL PRIMARY KEY,
+  user_id      CHAR(36)     NOT NULL,
+  exercise     VARCHAR(255) NOT NULL,
+  best_weight  DOUBLE       NOT NULL DEFAULT 0,
+  best_reps    INT          NOT NULL DEFAULT 0,
+  best_1rm     DOUBLE       NOT NULL DEFAULT 0,
+  achieved_at  VARCHAR(40)  NOT NULL,
+  UNIQUE KEY uniq_user_exercise (user_id, exercise),
+  INDEX idx_pr_user (user_id)
+) ENGINE=InnoDB;
+
+-- habits / habit_goals ---------------------------------------------------------
+CREATE TABLE IF NOT EXISTS habits (
+  id           CHAR(36)     NOT NULL PRIMARY KEY,
+  user_id      CHAR(36)     NOT NULL,
+  date         VARCHAR(20)  NOT NULL,
+  sleep_hours  DOUBLE       NOT NULL DEFAULT 0,
+  steps        INT          NOT NULL DEFAULT 0,
+  updated_at   VARCHAR(40)  NOT NULL,
+  UNIQUE KEY uniq_user_date (user_id, date),
+  INDEX idx_habits_user (user_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS habit_goals (
+  user_id       CHAR(36)    NOT NULL PRIMARY KEY,
+  water_goal    INT         NOT NULL DEFAULT 8,
+  protein_goal  INT         NOT NULL DEFAULT 150,
+  sleep_goal    DOUBLE      NOT NULL DEFAULT 8,
+  steps_goal    INT         NOT NULL DEFAULT 10000,
+  updated_at    VARCHAR(40) NOT NULL
+) ENGINE=InnoDB;
+
+-- achievements ------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS achievements (
+  id           CHAR(36)     NOT NULL PRIMARY KEY,
+  user_id      CHAR(36)     NOT NULL,
+  badge_key    VARCHAR(64)  NOT NULL,
+  unlocked_at  VARCHAR(40)  NOT NULL,
+  UNIQUE KEY uniq_user_badge (user_id, badge_key),
+  INDEX idx_achievements_user (user_id)
+) ENGINE=InnoDB;
