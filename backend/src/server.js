@@ -27,12 +27,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 // Body limit raised because body-scan / food-image endpoints send base64 images.
-<<<<<<< HEAD
 app.use(express.json({ limit: "60mb" })); // raised for short workout video uploads
-
-=======
-app.use(express.json({ limit: "25mb" }));
->>>>>>> 725a3bd69c491aed5e9aaef2905c864864f92a9e
 // CORS — matches the FastAPI CORSMiddleware config.
 const origins = (process.env.CORS_ORIGINS || "*").split(",");
 app.use(
