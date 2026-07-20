@@ -1,14 +1,18 @@
-name: Deploy to EC2 Server of Picksi
+name: Deploy Fitrize
+
 on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -17,10 +21,20 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
-            cd /home/ubuntu/fitrize
+
+            cd /home/ubuntu/entrance
+
+            echo "Pulling latest code..."
             git fetch origin main
             git reset --hard origin/main
+
+            echo "Installing backend dependencies..."
             cd backend
-            npm ci --omit=dev
-            pm2 restart fitrize || pm2 start src/server.js --name fitrize
+            npm ci --production
+
+            echo "Restarting app with PM2..."
+            pm2 describe fitrize > /dev/null \
+              && pm2 restart fitrize \
+              || pm2 start src/server.js --name fitrize
+
             pm2 save
