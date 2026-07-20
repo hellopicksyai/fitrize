@@ -19,7 +19,6 @@ import Feedback from "@/pages/Feedback";
 import Analytics from "@/pages/Analytics";
 import Profile from "@/pages/Profile";
 import AdminOverview from "@/pages/AdminOverview";
-import Paywall from "@/components/Paywall";
 
 const Protected = ({ children, requireOnboarded = true }) => {
   const { user } = useAuth();
@@ -43,11 +42,11 @@ function App() {
             <Route path="/onboarding" element={<Protected requireOnboarded={false}><Onboarding /></Protected>} />
             <Route path="/app" element={<Shell><Dashboard /></Shell>} />
             <Route path="/app/tracker" element={<Navigate to="/app/nutrition" replace />} />
-            <Route path="/app/nutrition" element={<Shell><Paywall feature="Custom Meal Plans"><Nutrition /></Paywall></Shell>} />
+            <Route path="/app/nutrition" element={<Shell><Nutrition /></Shell>} />
             <Route path="/app/workout" element={<Shell><Workout /></Shell>} />
-            <Route path="/app/form" element={<Shell><Paywall feature="Live Form Correction"><FormCorrection /></Paywall></Shell>} />
+            <Route path="/app/form" element={<Shell><FormCorrection /></Shell>} />
             <Route path="/app/coach" element={<Shell><Coach /></Shell>} />
-            <Route path="/app/body-scan" element={<Shell><Paywall feature="AI Body Scan"><BodyScan /></Paywall></Shell>} />
+            <Route path="/app/body-scan" element={<Shell><BodyScan /></Shell>} />
             <Route path="/app/progress" element={<Shell><Progress /></Shell>} />
             <Route path="/app/feedback" element={<Shell><Feedback /></Shell>} />
             <Route path="/app/log-workout" element={<Navigate to="/app/workout" replace />} />

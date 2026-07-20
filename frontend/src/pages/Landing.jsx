@@ -59,7 +59,6 @@ const Nav = () => {
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground">Features</a>
           <a href="#form" className="hover:text-foreground">Form Coach</a>
-          <a href="#pricing" className="hover:text-foreground">Pricing</a>
           <a href="#faq" className="hover:text-foreground">FAQ</a>
         </nav>
         <div className="flex items-center gap-2">
@@ -355,7 +354,6 @@ const Footer = () => {
           <ul className="space-y-2.5 text-sm text-muted-foreground">
             <li><a href="#features" data-testid="footer-link-features" className="hover:text-foreground">Features</a></li>
             <li><a href="#form" data-testid="footer-link-form" className="hover:text-foreground">Form Coach</a></li>
-            <li><a href="#pricing" data-testid="footer-link-pricing" className="hover:text-foreground">Pricing</a></li>
             <li><Link to="/app" data-testid="footer-link-app" className="hover:text-foreground">Open App</Link></li>
           </ul>
         </div>
@@ -395,7 +393,6 @@ export default function Landing() {
       <Features />
       <FormDemo />
       <MealPlanSection />
-      <Pricing />
       <FAQ />
       <Footer />
     </div>

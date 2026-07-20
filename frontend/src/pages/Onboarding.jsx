@@ -122,10 +122,6 @@ export default function Onboarding() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="sm:col-span-2">
-              <Label>Injuries / Limitations</Label>
-              <Textarea data-testid="onb-injuries" value={form.injuries} onChange={e=>set("injuries")(e.target.value)} placeholder="e.g. lower back, knee" className="mt-1.5 rounded-xl"/>
-            </div>
           </div>
         )}
 

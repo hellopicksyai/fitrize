@@ -7,13 +7,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Dumbbell, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 
+// Module-level cache: survives in-app navigation (component unmount/remount)
+// but resets on a full page refresh — exactly the requested behavior.
+let cachedWorkout = {
+  type: "gym", days: 4, plan: null, loggedDays: {},
+};
+
 export default function Workout() {
-  const [type, setType] = useState("gym");
-  const [days, setDays] = useState(4);
+  const [type, setType] = useState(cachedWorkout.type);
+  const [days, setDays] = useState(cachedWorkout.days);
   const [busy, setBusy] = useState(false);
-  const [plan, setPlan] = useState(null);
+  const [plan, setPlanState] = useState(cachedWorkout.plan);
   const [logging, setLogging] = useState(null); // index of day being logged
-  const [loggedDays, setLoggedDays] = useState({});
+  const [loggedDays, setLoggedDaysState] = useState(cachedWorkout.loggedDays);
+
+  // wrappers keep the cache in sync with state
+  const setPlan = (p) => { cachedWorkout.plan = p; setPlanState(p); };
+  const setLoggedDays = (updater) => {
+    setLoggedDaysState((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      cachedWorkout.loggedDays = next;
+      return next;
+    });
+  };
+  const setTypeCached = (t) => { cachedWorkout.type = t; setType(t); };
+  const setDaysCached = (d) => { cachedWorkout.days = d; setDays(d); };
 
   const gen = async () => {
     setBusy(true);
@@ -64,7 +82,7 @@ export default function Workout() {
       <Card className="p-5 rounded-2xl flex flex-wrap gap-3 items-end glass glow-hover">
         <div className="flex-1 min-w-[180px]">
           <div className="text-xs text-muted-foreground mb-1.5">Type</div>
-          <Select value={type} onValueChange={setType}>
+          <Select value={type} onValueChange={setTypeCached}>
             <SelectTrigger className="rounded-xl" data-testid="wk-type"><SelectValue/></SelectTrigger>
             <SelectContent>
               <SelectItem value="gym">Gym</SelectItem>
@@ -80,7 +98,7 @@ export default function Workout() {
         </div>
         <div className="w-40">
           <div className="text-xs text-muted-foreground mb-1.5">Days/week</div>
-          <Input type="number" min={1} max={7} value={days} onChange={e=>setDays(e.target.value)} className="rounded-xl" data-testid="wk-days"/>
+          <Input type="number" min={1} max={7} value={days} onChange={e=>setDaysCached(e.target.value)} className="rounded-xl" data-testid="wk-days"/>
         </div>
         <Button onClick={gen} disabled={busy} className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold" data-testid="wk-gen">
           {busy ? <Loader2 className="w-4 h-4 animate-spin mr-1"/> : <Sparkles className="w-4 h-4 mr-1"/>}

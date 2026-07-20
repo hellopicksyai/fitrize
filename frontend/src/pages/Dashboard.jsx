@@ -10,7 +10,7 @@ import Celebrate from "@/components/Celebrate";
 import { DashboardSkeleton } from "@/components/Skeletons";
 import { motion } from "framer-motion";
 import { stagger, rise } from "@/components/PageTransition";
-import { Flame, Trophy, Droplet, Plus, Brain, Dumbbell, Camera, Check, Target, Footprints, ScanLine, Loader2 } from "lucide-react";
+import { Flame, Trophy, Droplet, Plus, Minus, Brain, Dumbbell, Camera, Check, Target, Footprints, ScanLine, Loader2 } from "lucide-react";
 
 const Stat = ({ label, value, sub, testid, accent, decimals = 0, suffix = "" }) => (
   <motion.div variants={rise}>
@@ -31,7 +31,7 @@ const DailyGoals = ({ t, target, proteinGoal, water }) => {
   const goals = [
     { label: "Log a meal", done: t.calories > 0, icon: Plus },
     { label: `Hit ${proteinGoal}g protein`, done: t.protein >= proteinGoal, icon: Trophy },
-    { label: "Drink 8 glasses water", done: water >= 8, icon: Droplet },
+    { label: "Drink 3 L water", done: (water * 0.25) >= 3, icon: Droplet },
     { label: "Reach calorie goal", done: t.calories >= target * 0.9, icon: Target },
   ];
   const done = goals.filter(g => g.done).length;
@@ -62,6 +62,7 @@ export default function Dashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [stepInput, setStepInput] = useState("");
   const [savingSteps, setSavingSteps] = useState(false);
+  const [savingWater, setSavingWater] = useState(false);
 
   useEffect(() => {
     api.get("/stats/dashboard")
@@ -100,6 +101,20 @@ export default function Dashboard() {
     } catch {
       toast.error("Couldn't save steps");
     } finally { setSavingSteps(false); }
+  };
+
+  // Water: log intake directly from the dashboard (0.25 L per unit).
+  const changeWater = async (delta) => {
+    const next = Math.max(0, water + delta);
+    setSavingWater(true);
+    // optimistic update
+    setData((prev) => prev ? { ...prev, today: { ...prev.today, water_glasses: next } } : prev);
+    try {
+      await api.post("/water", { glasses: next });
+    } catch {
+      toast.error("Couldn't update water");
+      try { const r = await api.get("/stats/dashboard"); setData(r.data); } catch {}
+    } finally { setSavingWater(false); }
   };
   const target = p.target_cal || 2200;
   const proteinGoal = p.protein_goal_g || 150;
@@ -164,7 +179,17 @@ export default function Dashboard() {
           <Card className="p-5 rounded-2xl glass glow-hover h-full" data-testid="card-water">
             <div className="flex items-center justify-between"><div className="text-xs text-muted-foreground">Water</div><Droplet className="w-4 h-4 text-primary"/></div>
             <div className="display text-4xl mt-2"><CountUp value={+((water||0)*0.25).toFixed(2)} /><span className="text-muted-foreground text-2xl">/3 L</span></div>
-            <div className="text-xs text-muted-foreground mt-1">litres · update in nutrition</div>
+            <div className="w-full h-1.5 rounded-full bg-secondary mt-2 overflow-hidden">
+              <div className="h-full bg-primary glow-primary transition-all" style={{ width: `${Math.min(100, ((water*0.25)/3)*100)}%` }} aria-hidden />
+            </div>
+            <div className="flex items-center gap-2 mt-3">
+              <Button size="icon" variant="outline" className="rounded-full h-8 w-8" onClick={()=>changeWater(-1)} disabled={savingWater || water<=0} data-testid="dash-water-remove" aria-label="Remove water">
+                <Minus className="w-3.5 h-3.5"/>
+              </Button>
+              <Button size="sm" className="rounded-full flex-1" onClick={()=>changeWater(1)} disabled={savingWater} data-testid="dash-water-add">
+                {savingWater ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <><Plus className="w-3.5 h-3.5 mr-1"/>0.25 L</>}
+              </Button>
+            </div>
           </Card>
         </motion.div>
         <motion.div variants={rise}>
