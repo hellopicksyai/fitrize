@@ -69,6 +69,7 @@ const Nav = () => {
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground">Features</a>
           <a href="#form" className="hover:text-foreground">Form Coach</a>
+          <a href="#meal" className="hover:text-foreground">Meal Plan</a>
           <a href="#about" className="hover:text-foreground">About</a>
           <a href="#faq" className="hover:text-foreground">FAQ</a>
         </nav>
@@ -231,7 +232,7 @@ const FormDemo = () => (
 );
 
 const MealPlanSection = () => (
-  <section className="py-24">
+  <section id="meal" className="py-24">
     <div className="max-w-7xl mx-auto px-5 grid lg:grid-cols-2 gap-10 items-center">
       <div className="relative aspect-[5/4] rounded-3xl overflow-hidden">
         <img src={MEAL_BG} alt="" className="w-full h-full object-cover"/>
