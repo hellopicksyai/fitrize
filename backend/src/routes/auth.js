@@ -73,6 +73,7 @@ router.post("/auth/login", async (req, res, next) => {
     const token = makeToken(user.id);
     user.profile = parseJsonField(user.profile);
     user.onboarded = !!user.onboarded;
+    user.is_admin = !!user.is_admin;
     return res.json({ token, user: safeUser(user) });
   } catch (err) {
     next(err);

@@ -18,11 +18,16 @@ import Progress from "@/pages/Progress";
 import Feedback from "@/pages/Feedback";
 import Analytics from "@/pages/Analytics";
 import Profile from "@/pages/Profile";
-import AdminOverview from "@/pages/AdminOverview";
+import AdminShell from "@/components/AdminShell";
+import AdminHome from "@/pages/admin/AdminHome";
+import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminFeedback from "@/pages/admin/AdminFeedback";
+import AdminCoachMessages from "@/pages/admin/AdminCoachMessages";
 
 const Protected = ({ children, requireOnboarded = true }) => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/auth" replace />;
+  if (user.is_admin) return <Navigate to="/admin" replace />;  // admins live in the admin console
   if (requireOnboarded && !user.onboarded) return <Navigate to="/onboarding" replace />;
   return children;
 };
@@ -52,7 +57,10 @@ function App() {
             <Route path="/app/log-workout" element={<Navigate to="/app/workout" replace />} />
             <Route path="/app/analytics" element={<Shell><Analytics /></Shell>} />
             <Route path="/app/profile" element={<Shell><Profile /></Shell>} />
-            <Route path="/app/admin" element={<Shell><AdminOverview /></Shell>} />
+            <Route path="/admin" element={<AdminShell><AdminHome /></AdminShell>} />
+            <Route path="/admin/users" element={<AdminShell><AdminUsers /></AdminShell>} />
+            <Route path="/admin/feedback" element={<AdminShell><AdminFeedback /></AdminShell>} />
+            <Route path="/admin/coach" element={<AdminShell><AdminCoachMessages /></AdminShell>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <Toaster richColors position="top-right" theme="dark"/>

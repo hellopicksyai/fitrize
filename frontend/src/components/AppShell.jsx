@@ -24,9 +24,7 @@ const links = [
 
 // Shared nav list used by both desktop sidebar and mobile drawer.
 function NavLinks({ loc, onNavigate, isAdmin }) {
-  const items = isAdmin
-    ? [...links, { to: "/app/admin", label: "Admin", icon: ShieldAlert, testid: "nav-admin", admin: true }]
-    : links;
+  const items = links; // admin console is a fully separate area; never shown in the user nav
   return (
     <nav className="px-3 flex-1 min-h-0 overflow-y-auto space-y-1 sidebar-scroll">
       {items.map(({ to, label, icon: Icon, testid, admin }, i) => {

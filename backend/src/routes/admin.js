@@ -85,4 +85,105 @@ router.get("/admin/check", getCurrentUser, (req, res) => {
   res.json({ is_admin: !!req.user.is_admin });
 });
 
+// GET /api/admin/users?search=&page= — list/search users (paginated)
+router.get("/admin/users", getCurrentUser, requireAdmin, async (req, res, next) => {
+  try {
+    const search = (req.query.search || "").trim();
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const perPage = 20;
+    const offset = (page - 1) * perPage;
+
+    let where = "";
+    let params = [];
+    if (search) {
+      where = "WHERE name LIKE ? OR email LIKE ?";
+      params = [`%${search}%`, `%${search}%`];
+    }
+
+    const total = (await queryOne(`SELECT COUNT(*) AS c FROM users ${where}`, params))?.c || 0;
+    const users = await query(
+      `SELECT id, name, email, tier, is_admin, suspended, xp, level, streak, onboarded, created_at
+       FROM users ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      [...params, perPage, offset]
+    );
+
+    return res.json({
+      users: users.map(u => ({ ...u, is_admin: !!u.is_admin, suspended: !!u.suspended, onboarded: !!u.onboarded })),
+      total,
+      page,
+      per_page: perPage,
+      total_pages: Math.ceil(total / perPage),
+    });
+  } catch (err) { next(err); }
+});
+
+// PATCH /api/admin/users/:id — update a user's admin/suspended status
+router.patch("/admin/users/:id", getCurrentUser, requireAdmin, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { is_admin, suspended } = req.body;
+
+    // Guard: an admin can't suspend or demote themselves (avoid locking yourself out)
+    if (id === req.user.id && (suspended === true || is_admin === false)) {
+      return res.status(400).json({ detail: "You can't suspend or demote your own account." });
+    }
+
+    const target = await queryOne("SELECT id FROM users WHERE id = ?", [id]);
+    if (!target) return res.status(404).json({ detail: "User not found" });
+
+    const updates = [];
+    const params = [];
+    if (typeof is_admin === "boolean") { updates.push("is_admin = ?"); params.push(is_admin ? 1 : 0); }
+    if (typeof suspended === "boolean") { updates.push("suspended = ?"); params.push(suspended ? 1 : 0); }
+    if (!updates.length) return res.status(400).json({ detail: "Nothing to update" });
+
+    params.push(id);
+    await query(`UPDATE users SET ${updates.join(", ")} WHERE id = ?`, params);
+
+    const updated = await queryOne(
+      "SELECT id, name, email, tier, is_admin, suspended FROM users WHERE id = ?", [id]
+    );
+    return res.json({ ...updated, is_admin: !!updated.is_admin, suspended: !!updated.suspended });
+  } catch (err) { next(err); }
+});
+
+// GET /api/admin/feedback?page= — user-submitted feedback/support messages
+router.get("/admin/feedback", getCurrentUser, requireAdmin, async (req, res, next) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const perPage = 20;
+    const offset = (page - 1) * perPage;
+    let total = 0, rows = [];
+    try {
+      total = (await queryOne("SELECT COUNT(*) AS c FROM feedback"))?.c || 0;
+      rows = await query(
+        `SELECT id, user_id, user_name, user_email, category, rating, message, created_at
+         FROM feedback ORDER BY created_at DESC LIMIT ? OFFSET ?`, [perPage, offset]
+      );
+    } catch { total = 0; rows = []; }
+    return res.json({ feedback: rows, total, page, total_pages: Math.ceil(total / perPage) });
+  } catch (err) { next(err); }
+});
+
+// GET /api/admin/coach-messages?page= — what users are asking the AI coach
+router.get("/admin/coach-messages", getCurrentUser, requireAdmin, async (req, res, next) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const perPage = 25;
+    const offset = (page - 1) * perPage;
+    let total = 0, rows = [];
+    try {
+      total = (await queryOne("SELECT COUNT(*) AS c FROM coach_messages"))?.c || 0;
+      rows = await query(
+        `SELECT cm.id, cm.user_id, cm.role_user, cm.role_assistant, cm.created_at,
+                u.name AS user_name, u.email AS user_email
+         FROM coach_messages cm
+         LEFT JOIN users u ON u.id = cm.user_id
+         ORDER BY cm.created_at DESC LIMIT ? OFFSET ?`, [perPage, offset]
+      );
+    } catch { total = 0; rows = []; }
+    return res.json({ messages: rows, total, page, total_pages: Math.ceil(total / perPage) });
+  } catch (err) { next(err); }
+});
+
 export default router;

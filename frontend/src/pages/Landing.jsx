@@ -9,6 +9,8 @@ import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { startCheckout } from "@/lib/checkout";
 import { toast } from "sonner";
+import sushantImg from "@/assets/sushant.jpeg";
+import ninadImg from "@/assets/ninad.jpeg";
 import {
   Zap, Activity, Sparkles, Brain, Camera, Utensils, Dumbbell, TrendingUp,
   Moon, Sun, Check, ArrowRight, Flame, ScanLine,
@@ -38,10 +40,18 @@ const pricing = [
 ];
 
 const faqs = [
-  { q: "Is Fitrize really free?", a: "Yes — the Free plan covers calorie tracking, basic workouts and progress. Pro unlocks AI form, custom meal plans, and the body scan." },
-  { q: "How accurate is photo calorie tracking?", a: "We use Gemini 3 Flash vision to estimate macros per portion. Confidence scores are returned so you can correct quickly." },
-  { q: "Will live form correction work on my phone?", a: "Yes — the form coach uses your camera in-browser. A pose-detection demo is included in v1; full skeleton tracking ships in Pro." },
-  { q: "Can I cancel anytime?", a: "Of course. Pro and Elite are month-to-month, no contracts." },
+  { q: "What is Fitrize?", a: "Fitrize is an AI-powered fitness platform designed to help you achieve your health and fitness goals with personalized workout plans, nutrition guidance, progress tracking, and intelligent recommendations all in one place." },
+  { q: "Is Fitrize free to use?", a: "Yes! Fitrize is completely free to use during our early access phase. Our goal is to make personalized fitness accessible to everyone." },
+  { q: "Who can use Fitrize?", a: "Fitrize is built for everyone — whether you're a beginner, looking to lose weight, build muscle, improve endurance, or simply maintain a healthy lifestyle." },
+  { q: "How does Fitrize use AI?", a: "Our AI analyzes your fitness goals, preferences, and progress to provide personalized workout suggestions, nutrition recommendations, and fitness insights tailored specifically to you." },
+  { q: "Do I need gym equipment?", a: "Not at all. Fitrize supports both home workouts and gym-based training, so you can stay fit wherever you are." },
+  { q: "Is Fitrize available on the App Store or Google Play?", a: "Not yet. We are currently preparing for launch. You can stay updated through our website and social media channels." },
+  { q: "Can I track my fitness progress?", a: "Yes. Fitrize helps you monitor your workouts, achievements, and overall fitness journey, making it easier to stay motivated and consistent." },
+  { q: "Is my personal data secure?", a: "Absolutely. Protecting your privacy is a top priority. Your personal information is handled securely and is never shared without your permission." },
+  { q: "Can beginners use Fitrize?", a: "Yes. Fitrize is designed for users of all fitness levels, from complete beginners to experienced athletes." },
+  { q: "How do I get started?", a: "Simply create your account, tell us about your fitness goals, and let Fitrize build a personalized plan tailored to your needs." },
+  { q: "Will Fitrize always be free?", a: "Fitrize is completely free during the current phase. As we introduce new premium features in the future, we'll continue to offer a valuable free experience for all users." },
+  { q: "How can I contact the Fitrize team?", a: "You can reach us through the Contact page on our website or email us with your questions, feedback, or suggestions. We're always happy to hear from you." },
 ];
 
 const Nav = () => {
@@ -59,6 +69,7 @@ const Nav = () => {
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground">Features</a>
           <a href="#form" className="hover:text-foreground">Form Coach</a>
+          <a href="#about" className="hover:text-foreground">About</a>
           <a href="#faq" className="hover:text-foreground">FAQ</a>
         </nav>
         <div className="flex items-center gap-2">
@@ -291,6 +302,73 @@ const Pricing = () => {
   );
 };
 
+const About = () => (
+  <section id="about" className="py-24 border-t border-border">
+    <div className="max-w-6xl mx-auto px-5">
+      <div className="text-center max-w-2xl mx-auto">
+        <div className="text-xs text-accent uppercase tracking-widest">About Fitrize</div>
+        <h2 className="display text-4xl sm:text-5xl mt-2">Smarter fitness. Powered by AI.</h2>
+        <p className="text-muted-foreground mt-4">
+          Fitrize was born from a simple idea: fitness should be personal, accessible, and powered by technology.
+          We saw that many people struggle with generic workout plans and one-size-fits-all advice — so we created
+          an AI-powered fitness platform that adapts to your goals, lifestyle and progress, helping you stay motivated every step of the way.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-5 mt-12">
+        <Card className="p-6 rounded-2xl glass">
+          <div className="text-xs text-accent uppercase tracking-widest mb-2">Our Mission</div>
+          <p className="text-muted-foreground">To empower people around the world with personalized, AI-driven fitness solutions that make healthy living simple, accessible, and achievable for everyone.</p>
+        </Card>
+        <Card className="p-6 rounded-2xl glass">
+          <div className="text-xs text-accent uppercase tracking-widest mb-2">Our Vision</div>
+          <p className="text-muted-foreground">To become the world's most trusted AI-powered fitness platform, inspiring millions to build healthier lifestyles through innovation, personalization, and technology.</p>
+        </Card>
+      </div>
+
+      {/* Founders */}
+      <div className="mt-20">
+        <div className="text-center">
+          <div className="text-xs text-accent uppercase tracking-widest">The team</div>
+          <h3 className="display text-4xl mt-2">Meet the Founders</h3>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-6 mt-10 max-w-4xl mx-auto">
+          {[
+            { img: ninadImg, name: "Ninad Rane", role: "Founder",
+              bio: "The visionary behind Fitrize, driven by a passion for fitness and innovation. He founded Fitrize believing everyone deserves access to personalized, AI-powered fitness guidance — bridging technology and wellness to help people build healthier habits." },
+            { img: sushantImg, name: "Sushant Amin", role: "Co-Founder",
+              bio: "The technical architect of the platform, responsible for transforming ideas into scalable, secure and user-friendly products. With expertise in modern web technologies, Sushant is committed to building a seamless AI-powered fitness experience users can trust every day." },
+          ].map((f) => (
+            <Card key={f.name} className="p-6 rounded-3xl glass glow-hover flex flex-col items-center text-center">
+              {/* circular photo with ring */}
+              <div className="relative">
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-accent to-primary opacity-70 blur-[2px]" aria-hidden />
+                <img src={f.img} alt={f.name}
+                  className="relative w-32 h-32 rounded-full object-cover object-center ring-2 ring-background" />
+              </div>
+              <div className="display text-2xl mt-5">{f.name}</div>
+              <div className="mt-1.5 inline-block px-3 py-1 rounded-full bg-accent/10 text-accent text-xs uppercase tracking-widest">
+                {f.role}
+              </div>
+              <p className="text-sm text-muted-foreground mt-4 leading-relaxed">{f.bio}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Why Fitrize */}
+      <div className="mt-16 max-w-2xl mx-auto text-center">
+        <h3 className="display text-2xl">Why "Fitrize"?</h3>
+        <p className="text-muted-foreground mt-3">
+          The name combines "Fit" and "Rise" — reflecting our belief that fitness is about continuous growth.
+          We help you rise above your limits with personalized AI guidance, empowering you to become stronger,
+          healthier, and more confident every day.
+        </p>
+      </div>
+    </div>
+  </section>
+);
+
 const FAQ = () => (
   <section id="faq" className="py-24">
     <div className="max-w-3xl mx-auto px-5">
@@ -361,7 +439,7 @@ const Footer = () => {
         <div className="lg:col-span-3">
           <div className="display text-lg mb-4">Company</div>
           <ul className="space-y-2.5 text-sm text-muted-foreground">
-            <li><a href="#" data-testid="footer-link-about" className="hover:text-foreground">About</a></li>
+            <li><a href="#about" data-testid="footer-link-about" className="hover:text-foreground">About</a></li>
             <li><a href="#faq" data-testid="footer-link-faq" className="hover:text-foreground">FAQ</a></li>
             <li><a href="#" data-testid="footer-link-blog" className="hover:text-foreground">Blog</a></li>
             <li><a href="#" data-testid="footer-link-careers" className="hover:text-foreground">Careers</a></li>
@@ -393,6 +471,7 @@ export default function Landing() {
       <Features />
       <FormDemo />
       <MealPlanSection />
+      <About />
       <FAQ />
       <Footer />
     </div>

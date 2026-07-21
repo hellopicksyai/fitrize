@@ -26,7 +26,9 @@ export default function Auth() {
         ? await login(email, password)
         : await register(email, password, name);
       toast.success(`Welcome${user.name ? ", " + user.name : ""}!`);
-      nav(user.onboarded ? "/app" : "/onboarding");
+      // Admins go straight to the admin console, not the user app
+      if (user.is_admin) nav("/admin");
+      else nav(user.onboarded ? "/app" : "/onboarding");
     } catch (err) {
       toast.error(err?.response?.data?.detail || "Something went wrong");
     } finally { setBusy(false); }
