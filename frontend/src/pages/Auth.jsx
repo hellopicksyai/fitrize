@@ -6,13 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Zap, Loader2 } from "lucide-react";
+import { Zap, Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function Auth() {
   const [params] = useSearchParams();
   const [mode, setMode] = useState(params.get("mode") === "register" ? "register" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const { login, register } = useAuth();
@@ -74,7 +75,14 @@ export default function Auth() {
             </div>
             <div>
               <Label htmlFor="password">Password</Label>
-              <Input id="password" data-testid="auth-password" type="password" required minLength={6} value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" className="mt-1.5 rounded-xl"/>
+              <div className="relative mt-1.5">
+                <Input id="password" data-testid="auth-password" type={showPassword ? "text" : "password"} required minLength={6} value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" className="rounded-xl pr-11"/>
+                <button type="button" onClick={()=>setShowPassword(v=>!v)} data-testid="toggle-password"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition">
+                  {showPassword ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
+                </button>
+              </div>
             </div>
             <Button type="submit" disabled={busy} data-testid="auth-submit"
               className="w-full rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold">
