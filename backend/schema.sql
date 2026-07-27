@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS users (
   level       INT          NOT NULL DEFAULT 1,
   tier        VARCHAR(32)  NOT NULL DEFAULT 'pro',
   onboarded   TINYINT(1)   NOT NULL DEFAULT 0,
+  is_admin    TINYINT(1)   NOT NULL DEFAULT 0,
+  suspended   TINYINT(1)   NOT NULL DEFAULT 0,
   profile     JSON         NULL,
   tier_since  VARCHAR(40)  NULL,
   created_at  VARCHAR(40)  NOT NULL,
@@ -217,3 +219,6 @@ CREATE TABLE IF NOT EXISTS achievements (
   UNIQUE KEY uniq_user_badge (user_id, badge_key),
   INDEX idx_achievements_user (user_id)
 ) ENGINE=InnoDB;
+
+
+
