@@ -336,7 +336,7 @@ const About = () => (
         <div className="grid sm:grid-cols-2 gap-6 mt-10 max-w-4xl mx-auto">
           {[
             { img: ninadImg, name: "Ninad Rane", role: "Founder",
-              bio: "The visionary behind Fitrize, driven by a passion for fitness and innovation. He founded Fitrize believing everyone deserves access to personalized, AI-powered fitness guidance — bridging technology and wellness to help people build healthier habits." },
+              bio: "The visionary behind Fitrize, driven by a passion for fitness and innovation. He founded Fitrize believing everyone deserves access to personalized, AI-powered fitness guidance bridging technology and wellness to help people build healthier habits." },
             { img: sushantImg, name: "Sushant Amin", role: "Co-Founder",
               bio: "The technical architect of the platform, responsible for transforming ideas into scalable, secure and user-friendly products. With expertise in modern web technologies, Sushant is committed to building a seamless AI-powered fitness experience users can trust every day." },
           ].map((f) => (
@@ -361,7 +361,7 @@ const About = () => (
       <div className="mt-16 max-w-2xl mx-auto text-center">
         <h3 className="display text-2xl">Why "Fitrize"?</h3>
         <p className="text-muted-foreground mt-3">
-          The name combines "Fit" and "Rise" — reflecting our belief that fitness is about continuous growth.
+          The name combines "Fit" and "Rise" reflecting our belief that fitness is about continuous growth.
           We help you rise above your limits with personalized AI guidance, empowering you to become stronger,
           healthier, and more confident every day.
         </p>
