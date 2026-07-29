@@ -107,7 +107,7 @@ const Hero = () => {
             Powered by Gemini 3 Flash · Vision-grade AI coaching
           </div>
           <h1 className="display text-balance text-5xl sm:text-6xl lg:text-7xl leading-[0.95]">
-            Train smarter. <span className="text-primary">Transform</span> <span className="text-accent">faster</span>.
+            Train Smarter. <span className="text-primary">Transform</span> <span className="text-accent">faster</span>.
           </h1>
           <p className="mt-6 max-w-xl text-base md:text-lg text-muted-foreground">
             The premium AI fitness OS. Live form correction, vision-based calorie tracking, custom workouts, and a coach that actually knows you.
@@ -373,7 +373,7 @@ const About = () => (
 const FAQ = () => (
   <section id="faq" className="py-24">
     <div className="max-w-3xl mx-auto px-5">
-      <h2 className="display text-4xl sm:text-5xl text-center">Frequently asked</h2>
+      <h2 className="display text-4xl sm:text-5xl text-center">Frequently asked Question</h2>
       <Accordion type="single" collapsible className="mt-10">
         {faqs.map((f, i) => (
           <AccordionItem key={i} value={`q-${i}`} className="border-border">
