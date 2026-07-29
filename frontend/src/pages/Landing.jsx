@@ -464,6 +464,8 @@ const Footer = () => {
   );
 };
 
+#adding textual changes
+
 export default function Landing() {
   return (
     <div data-testid="landing-page">
