@@ -18,7 +18,7 @@ jobs:
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
             set -e
-            cd /home/fitrize/fitrize   # adjust path to wherever it lives on the VPS
+            cd /home/fitrize/   # adjust path to wherever it lives on the VPS
             echo "Pulling latest code..."
             git fetch origin main
             git reset --hard origin/main
