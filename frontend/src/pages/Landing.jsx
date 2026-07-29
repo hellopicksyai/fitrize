@@ -402,7 +402,7 @@ const Footer = () => {
             <div className="w-9 h-9 rounded-xl bg-accent grid place-items-center"><Zap className="w-5 h-5 text-accent-foreground" strokeWidth={2.5}/></div>
             <span className="display text-2xl">Fitrize</span>
           </div>
-          <p className="text-sm text-muted-foreground mt-4 max-w-md">Train smarter. Transform faster. The premium AI fitness OS — vision-grade calorie tracking, live form correction, and a coach that actually knows you.</p>
+          <p className="text-sm text-muted-foreground mt-4 max-w-md">Train Harder. Transform faster. The premium AI fitness OS — vision-grade calorie tracking, live form correction, and a coach that actually knows you.</p>
           <form onSubmit={sub} className="mt-6 flex gap-2 max-w-sm">
             <Input data-testid="footer-newsletter-email" required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@fitrize.app" className="rounded-full"/>
             <Button data-testid="footer-newsletter-submit" type="submit" className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-bold">
