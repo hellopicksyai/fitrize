@@ -18,7 +18,7 @@ import achievementsRoutes from "./routes/achievements.js";
 import notificationsRoutes from "./routes/notifications.js";
 import profileRoutes from "./routes/profile.js";
 import adminRoutes from "./routes/admin.js";
-import { pool } from "./config/db.js";
+import { connectDb, client } from "./config/db.js";
 
 dotenv.config();
 
@@ -71,15 +71,23 @@ app.use((err, req, res, _next) => {
   res.status(status).json({ detail: err.message || "Internal server error" });
 });
 const PORT = process.env.PORT || 8000;
-const server = app.listen(PORT, () => {
-  console.log(`✓ BitFits API running on http://localhost:${PORT}`);
-});
+let server;
+connectDb()
+  .then(() => {
+    server = app.listen(PORT, () => {
+      console.log(`✓ BitFits API running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((e) => {
+    console.error("[fatal] Could not connect to MongoDB:", e.message);
+    process.exit(1);
+  });
 // Graceful shutdown (port of @app.on_event("shutdown")).
 process.on("SIGINT", async () => {
-  await pool.end();
-  server.close(() => process.exit(0));
+  await client.close();
+  if (server) server.close(() => process.exit(0)); else process.exit(0);
 });
 process.on("SIGTERM", async () => {
-  await pool.end();
-  server.close(() => process.exit(0));
+  await client.close();
+  if (server) server.close(() => process.exit(0)); else process.exit(0);
 });

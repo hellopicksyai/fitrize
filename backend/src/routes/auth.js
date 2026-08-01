@@ -1,14 +1,7 @@
 import { Router } from "express";
-import { pool, queryOne } from "../config/db.js";
+import { col } from "../config/db.js";
 import { makeToken, getCurrentUser } from "../middleware/auth.js";
-import {
-  newId,
-  nowIso,
-  hashPw,
-  verifyPw,
-  safeUser,
-  parseJsonField,
-} from "../utils/helpers.js";
+import { newId, nowIso, hashPw, verifyPw, safeUser } from "../utils/helpers.js";
 import { validate } from "../utils/validate.js";
 
 const router = Router();
@@ -24,9 +17,7 @@ router.post("/auth/register", async (req, res, next) => {
     if (!v.ok) return res.status(422).json({ detail: v.error });
     const { email, password, name } = v.value;
 
-    const existing = await queryOne("SELECT id FROM users WHERE email = ?", [
-      email.toLowerCase(),
-    ]);
+    const existing = await col("users").findOne({ email: email.toLowerCase() });
     if (existing) return res.status(400).json({ detail: "Email already registered" });
 
     const uid = newId();
@@ -35,20 +26,20 @@ router.post("/auth/register", async (req, res, next) => {
       id: uid,
       email: email.toLowerCase(),
       name,
+      password: hashPw(password),
       xp: 0,
       streak: 0,
       level: 1,
       tier: "pro",
       onboarded: false,
+      is_admin: false,
+      suspended: false,
+      profile: null,
       created_at,
     };
-    await pool.execute(
-      `INSERT INTO users (id, email, name, password, xp, streak, level, tier, onboarded, created_at)
-       VALUES (?, ?, ?, ?, 0, 0, 1, 'pro', 0, ?)`,
-      [uid, doc.email, name, hashPw(password), created_at]
-    );
+    await col("users").insertOne(doc);
     const token = makeToken(uid);
-    return res.json({ token, user: doc });
+    return res.json({ token, user: safeUser({ ...doc }) });
   } catch (err) {
     next(err);
   }
@@ -64,16 +55,14 @@ router.post("/auth/login", async (req, res, next) => {
     if (!v.ok) return res.status(422).json({ detail: v.error });
     const { email, password } = v.value;
 
-    const user = await queryOne("SELECT * FROM users WHERE email = ?", [
-      email.toLowerCase(),
-    ]);
+    const user = await col("users").findOne({ email: email.toLowerCase() });
     if (!user || !verifyPw(password, user.password)) {
       return res.status(401).json({ detail: "Invalid credentials" });
     }
     const token = makeToken(user.id);
-    user.profile = parseJsonField(user.profile);
     user.onboarded = !!user.onboarded;
     user.is_admin = !!user.is_admin;
+    delete user._id;
     return res.json({ token, user: safeUser(user) });
   } catch (err) {
     next(err);
